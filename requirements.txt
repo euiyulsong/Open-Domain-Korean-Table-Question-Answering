@@ -1,0 +1,7 @@
+tqdm
+beautifulsoup4
+exception
+lxml
+html-to-json
+html5lib
+emoji
