@@ -2,9 +2,11 @@
 TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question Answering
 
 ## Directory Structure
+```
 ├── README.md
 ├── refine.py #perform data cleaning
 └── requirements.txt
+```
 
 ## Install Required Packages
 ```pip install -r requirements.txt```
