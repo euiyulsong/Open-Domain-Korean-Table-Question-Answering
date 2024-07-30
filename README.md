@@ -17,6 +17,7 @@ TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question A
 | Inst + RAFT |   |   | |
 | Inst + Synthetic + RAFT |   |   | |
 | Inst + Synthetic + SimPO (RAFT) |   |   | |
+| Inst + SimPO (Synthetic) + SimPO (RAFT) |   |   | |
 
 ## Directory Structure
 ```
