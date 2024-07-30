@@ -1,5 +1,13 @@
 # ODQA
 TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question Answering
+## Performance
+
+### Retrieval
+| Method | R-Precision | Recall@5 |
+| ------------- | ------------- | ------------- |
+| BM25 | 67.018  | 90.964  |
+| Dense | 73.042  | 95.03  |
+| Cross Encoder |   |   |
 
 ## Directory Structure
 ```
