@@ -16,8 +16,8 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 ### Retrieval
 | Method | R-Precision | Recall@5 | TPS | 
 | ------------- | ------------- | ------------- | ------------- |
-| BM25 | 67.169 | 91.265 | 0.007s |
-| Dense |  73.645 | 94.729 | 0.44s |
+| BM25 | 67.37 | 91.265 | 0.007s |
+| Dense |  73.343 | 95.03 | 0.44s |
 | Cross Encoder |  |  | 1.30s |
 
 ### Reader
