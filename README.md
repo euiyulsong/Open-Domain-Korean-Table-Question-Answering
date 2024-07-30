@@ -1,13 +1,14 @@
 # ODQA
 RAFT, Domain  on google/gemma-2b TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question Answering
 ## Performance
+### Hardware Configuration
 
 ### Retrieval
-| Method | R-Precision | Recall@5 |
-| ------------- | ------------- | ------------- |
-| BM25 | 67.018  | 90.964  |
-| Dense | 73.042  | 95.03  |
-| Cross Encoder |   |   |
+| Method | R-Precision | Recall@5 | TPS | 
+| ------------- | ------------- | ------------- | ------------- |
+| BM25 | 67.018  | 90.964  | 0.007s |
+| Dense | 73.042  | 95.03  | 0.44s |
+| Cross Encoder | 77.259  | 96.084  | 1.30s |
 
 ### Reader
 | Method | EM | F-1 | Rouge-l |
