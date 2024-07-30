@@ -38,11 +38,9 @@ RAFT, Domain  on google/gemma-2b TAPT, Instruction Tuning, and Preference Optimi
 
 ## Data Cleaning
 ### Clean Data
-```python src/clean/clean.py -d ${DATASET_PATH}```
-### Map negative pairs and filter data with more than 1 gold table for Retrieval
-```python src/clean/map.py```
-### Clean corpus and map rejection samples for Preference Optmization
-```python src/clean/negatives.py```
+```python src/clean/clean.py # html parsing``'
+```python src/clean/map.py # Map negative pairs and filter data with more than 1 gold table for Retrieval ```
+```python src/clean/negatives.py # Clean corpus and map rejection samples for Preference Optmization```
 ### Random Train/Test split
 ```bash src/split/split.sh```
 
