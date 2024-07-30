@@ -17,7 +17,7 @@ RAFT, Domain  on google/gemma-2b TAPT, Instruction Tuning, and Preference Optimi
 | Cross Encoder | 86.898 | 95.783 | 1.30s |
 
 ### Reader
-| Method | EM | F-1 | Rouge-l |
+| Method | EM | F-1 | Rouge-L |
 | ------------- | ------------- | ------------- |------------- |
 | SFT |  |   | |
 | RAFT |   |   | |
