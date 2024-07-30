@@ -18,7 +18,7 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | ------------- | ------------- | ------------- | ------------- |
 | BM25 | 67.37 | 91.265 | 0.007s |
 | Dense |  73.343 | 95.03 | 0.44s |
-| Cross Encoder |  |  | 1.30s |
+| Cross Encoder | 86.747 | 96.084 | 1.30s |
 
 ### Reader
 | Method | EM | F-1 | Rouge-L |
