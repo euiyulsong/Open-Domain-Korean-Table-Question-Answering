@@ -1,5 +1,5 @@
 # ODQA
-TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question Answering
+RAFT, Domain  on google/gemma-2b TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question Answering
 ## Performance
 
 ### Retrieval
@@ -15,9 +15,9 @@ TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question A
 | SFT |  |   | |
 | RAFT |   |   | |
 | Inst + RAFT |   |   | |
-| Inst + Synthetic + RAFT |   |   | |
-| Inst + Synthetic + SimPO (RAFT) |   |   | |
-| Inst + SimPO (Synthetic) + SimPO (RAFT) |   |   | |
+| Inst + DAPT (Synthetic, RAFT) + RAFT |   |   | |
+| Inst + DAPT (Synthetic, RAFT) + RAFT (SimPO) |   |   | |
+| Inst + DAPT (Synthetic, SimPO) + RAFT (SimPO) |   |   | |
 
 ## Directory Structure
 ```
