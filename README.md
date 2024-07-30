@@ -1,5 +1,5 @@
 # Open Domain Question Answering
-RAFT, Domain  on google/gemma-2b TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question Answering
+RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b](https://huggingface.co/google/gemma-2b) for Open Domain Question Answering
 ## Performance
 ### Hyperparameters
 | Hp | Retrieval | Reranker | Reader | 
