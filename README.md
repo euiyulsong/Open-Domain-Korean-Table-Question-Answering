@@ -1,4 +1,4 @@
-# ODQA
+# Open Domain Question Answering
 RAFT, Domain  on google/gemma-2b TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question Answering
 ## Performance
 ### Hyperparameters
@@ -48,7 +48,7 @@ python src/clean/negatives.py # clean corpus and map rejection samples for Prefe
 bash src/split/split.sh
 ```
 
-## Synthetic Data Generation
+### Synthetic Data Generation
 ```
 python src/synthetic/question_generation.py # question generation
 python src/synthetic/answer_generation.py # qnswer generation
