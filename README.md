@@ -22,9 +22,10 @@ RAFT, Domain  on google/gemma-2b TAPT, Instruction Tuning, and Preference Optimi
 | SFT |  |   | |
 | RAFT |   |   | |
 | Inst + RAFT |   |   | |
-| Inst + DAPT (Synthetic, RAFT) + RAFT |   |   | |
-| Inst + DAPT (Synthetic, RAFT) + RAFT (SimPO) |   |   | |
-| Inst + DAPT (Synthetic, SimPO) + RAFT (SimPO) |   |   | |
+| Inst + TAPT + RAFT |   |   | |
+| Inst + TAPT + Synthetic RAFT + RAFT |   |   | |
+| Inst + TAPT + Synthetic RAFT + SimPO|   |   | |
+| Inst + TPT + Synthetic SimPO + SimPO |   |   | |
 
 ## Directory Structure
 ```
