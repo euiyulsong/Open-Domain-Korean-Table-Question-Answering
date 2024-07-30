@@ -36,7 +36,7 @@ RAFT, Domain  on google/gemma-2b TAPT, Instruction Tuning, and Preference Optimi
 ## Install Required Packages
 ```pip install -r requirements.txt```
 
-## Data Cleaning
+## Data Preprocessing
 ### Clean Data
 ```
 python src/clean/clean.py # html parsing
@@ -55,6 +55,8 @@ python src/synthetic/answer_generation.py # qnswer generation
 ```
 
 ## Retrieval
+### Data Preparation
+```python src/clean/copy_train.py```
 ### Training
 #### Dense Retrieval
 ```bash src/retrieval/dense_finetuning.sh```
