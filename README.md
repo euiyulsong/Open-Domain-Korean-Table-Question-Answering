@@ -40,19 +40,19 @@ RAFT, Domain  on google/gemma-2b TAPT, Instruction Tuning, and Preference Optimi
 ### Clean Data
 ```
 python src/clean/clean.py # html parsing
-
-python src/clean/map.py # Map negative pairs and filter data with more than 1 gold table for Retrieval
-
-python src/clean/negatives.py # Clean corpus and map rejection samples for Preference Optmization
+python src/clean/map.py # map negative pairs and filter data with more than 1 gold table for Retrieval
+python src/clean/negatives.py # clean corpus and map rejection samples for Preference Optmization
 ```
-### Random Train/Test split
-```bash src/split/split.sh```
+### Train/Test split
+```
+bash src/split/split.sh
+```
 
 ## Synthetic Data Generation
-## Question Generation
-```python src/synthetic/question_generation.py```
-## Answer Generation
-```python src/synthetic/answer_generation.py```
+```
+python src/synthetic/question_generation.py # question generation
+python src/synthetic/answer_generation.py # qnswer generation
+```
 
 ## Retrieval
 ### Training
@@ -60,7 +60,7 @@ python src/clean/negatives.py # Clean corpus and map rejection samples for Prefe
 ```bash src/retrieval/dense_finetuning.sh```
 #### Cross Encoder Reranker
 ```bash src/retrieval/ce_finetuning.sh```
-### Inferenec3
+### Inferenece
 ```python src/retrieval/retrieval.py```
 
 
