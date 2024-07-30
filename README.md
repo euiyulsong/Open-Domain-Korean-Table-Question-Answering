@@ -8,7 +8,7 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | bs |  |  |  |
 | scheduler |  |  |  |
 | gpu | rtx 4090  | rtx 4090  | rtx 4090  |
-| τ |  |  |  |
+| τ | 0.02 |  |  |
 ### Retrieval
 | Method | R-Precision | Recall@5 | TPS | 
 | ------------- | ------------- | ------------- | ------------- |
