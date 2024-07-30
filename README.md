@@ -8,13 +8,13 @@ RAFT, Domain  on google/gemma-2b TAPT, Instruction Tuning, and Preference Optimi
 | bs |  |  |  |
 | scheduler |  |  |  |
 | gpu | rtx 4090  | rtx 4090  | rtx 4090  |
-
+| τ |  |  |  |
 ### Retrieval
 | Method | R-Precision | Recall@5 | TPS | 
 | ------------- | ------------- | ------------- | ------------- |
-| BM25 | 67.02  | 90.96  | 0.007s |
-| Dense | 73.04  | 95.03  | 0.44s |
-| Cross Encoder | 77.26  | 96.08  | 1.30s |
+| BM25 | 67.169 | 91.265 | 0.007s |
+| Dense | 74.398  | 94.127 | 0.44s |
+| Cross Encoder | 86.898 | 95.783 | 1.30s |
 
 ### Reader
 | Method | EM | F-1 | Rouge-l |
