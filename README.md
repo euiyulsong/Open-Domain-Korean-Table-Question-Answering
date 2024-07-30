@@ -1,14 +1,20 @@
 # ODQA
 RAFT, Domain  on google/gemma-2b TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question Answering
 ## Performance
-### Hardware Configuration
+### Hyperparameters
+| Hp | Retrieval | Reranker | Reader | 
+| ------------- | ------------- | ------------- | ------------- |
+| lr |  |  |  |
+| bs |  |  |  |
+| scheduler |  |  |  |
+| gpu | rtx 4090  | rtx 4090  | rtx 4090  |
 
 ### Retrieval
 | Method | R-Precision | Recall@5 | TPS | 
 | ------------- | ------------- | ------------- | ------------- |
-| BM25 | 67.018  | 90.964  | 0.007s |
-| Dense | 73.042  | 95.03  | 0.44s |
-| Cross Encoder | 77.259  | 96.084  | 1.30s |
+| BM25 | 67.02  | 90.96  | 0.007s |
+| Dense | 73.04  | 95.03  | 0.44s |
+| Cross Encoder | 77.26  | 96.08  | 1.30s |
 
 ### Reader
 | Method | EM | F-1 | Rouge-l |
