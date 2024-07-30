@@ -8,13 +8,17 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | bs |  |  |  |
 | scheduler |  |  |  |
 | gpu | rtx 4090  | rtx 4090  | rtx 4090  |
+| epoch |  |  |  |
+| input maxlength |  |  |  |
+| batch size |   |  |  |
+| hard neg | 8 |  |  |
 | τ | 0.02 |  |  |
 ### Retrieval
 | Method | R-Precision | Recall@5 | TPS | 
 | ------------- | ------------- | ------------- | ------------- |
 | BM25 | 67.169 | 91.265 | 0.007s |
-| Dense | 74.398  | 94.127 | 0.44s |
-| Cross Encoder | 86.898 | 95.783 | 1.30s |
+| Dense |  73.645 | 94.729 | 0.44s |
+| Cross Encoder |  |  | 1.30s |
 
 ### Reader
 | Method | EM | F-1 | Rouge-L |
