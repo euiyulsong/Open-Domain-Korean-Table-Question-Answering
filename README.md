@@ -9,6 +9,15 @@ TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question A
 | Dense | 73.042  | 95.03  |
 | Cross Encoder |   |   |
 
+### Reader
+| Method | EM | F-1 | Rouge-l |
+| ------------- | ------------- | ------------- |------------- |
+| SFT |  |   | |
+| RAFT |   |   | |
+| Inst + RAFT |   |   | |
+| Inst + Synthetic + RAFT |   |   | |
+| Inst + Synthetic + SimPO (RAFT) |   |   | |
+
 ## Directory Structure
 ```
 ├── README.md
@@ -19,7 +28,7 @@ TAPT, Instruction Tuning, and Preference Optimization for Open Domain Question A
 ## Install Required Packages
 ```pip install -r requirements.txt```
 
-## Gold Data Preprocessing
+## Data Cleaning
 ### Clean Data
 ```python src/clean/clean.py -d ${DATASET_PATH}```
 ### Map negative pairs and filter data with more than 1 gold table for Retrieval
