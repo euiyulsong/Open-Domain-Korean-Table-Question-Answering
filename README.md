@@ -26,7 +26,7 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | SFT | 0  | 5.13  | 14.39 |
 | RAFT | 0 | 3.423  | 77.136 |
 | Inst | 0 |  3.4000 | 89.71 | 
-| Inst + Synthetic RAFT | 0  | 0.03404  | 0.90426 |
+| Inst + Synthetic RAFT | 0  | 3.404  | 90.426 |
 | Inst + Synthetic RAFT + RAFT |   |   | |
 | Inst + Synthetic RAFT + SimPO  |   |   | |
 
