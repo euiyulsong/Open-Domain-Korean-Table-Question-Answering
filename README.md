@@ -28,7 +28,7 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | Inst | 0 |  3.4000 | 89.71 | 
 | Inst + Synthetic RAFT | 0  | 3.404  | 90.426 |
 | Inst + Synthetic RAFT + RAFT |   |   | |
-| Inst + Synthetic RAFT + SimPO  |   |   | |
+| Inst + Synthetic RAFT + SimPO  |  0 | 3.407  | 90.746| 
 
 
 ## Directory Structure
