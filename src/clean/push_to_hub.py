@@ -18,8 +18,8 @@ if __name__ == "__main__":
     """
     Korwiki, Korquad Instruct-FT
     """
-    parser.add_argument("-d", "--input_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/kor_wiki_quad_concat_sft.jsonl", required=False)
-    parser.add_argument("-o", "--output_name", help="Output huggingface repo name to save", type=str, default="kor_wiki_quad_od_instruct", required=False)
+    parser.add_argument("-d", "--input_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2.jsonl", required=False)
+    parser.add_argument("-o", "--output_name", help="Output huggingface repo name to save", type=str, default="kkt_synth_od_sft", required=False)
     parser.add_argument("-v", "--view", help="View dataset", default=False, action="store_true")
     parser.add_argument("-s", "--split", help="Dataset split", type=str, default="train", required=False)
     parser.add_argument("-m", "--model_name", help="Model name for tokenization", type=str, default="google/gemma-2b", required=False)
@@ -59,14 +59,23 @@ if __name__ == "__main__":
         for i in tqdm(f):
             i = json.loads(i)
             if 'od' in args.output_name:
+
                 text = f"<start_of_turn>user\n{random.sample(od_instructions, 1)[0]}\n\n[질문]: {i['question']}\n\n[문맥]: {i['table']}\n\n[답변]: <end_of_turn>\n<start_of_turn>model\n{i['answer']}<end_of_turn>"
                 current_length = len(tokenizer.encode(text))
                 if current_length > 1411:
                     count_big +=1
                     continue
+                if "simpo" in args.output_name:
+                    prompt = f"<start_of_turn>user\n{random.sample(od_instructions, 1)[0]}\n\n[질문]: {i['question']}\n\n[문맥]: {i['table']}\n\n[답변]: <end_of_turn>\n<start_of_turn>model\n"
+                    rejected = f"{i['rejected']}<end_of_turn>"
+                    chosen = f"{i['answer']}<end_of_turn>"
+
             else:
                 text = f"<start_of_turn>user\n{random.sample(cd_instructions, 1)[0]}\n\n[질문]: {i['question']}\n\n[답변]: <end_of_turn>\n<start_of_turn>model\n{i['answer']}<end_of_turn>"
-            output.append({"text": text})
+            if "simpo" not in args.output_name:
+                output.append({"text": text})
+            else:
+                output.append({"text": text, "prompt": prompt, "rejected": rejected, "chosen": chosen})
 
         dataset = Dataset.from_list(output)
         split = 'train' if 'train' in args.split else 'test'

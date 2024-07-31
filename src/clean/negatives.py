@@ -176,7 +176,7 @@ if __name__ in "__main__":
                 temp = str(json_sampled[random.sample(key_set, 1)[0]])
             i['rejected'] = temp
 
-        assert i['rejected'] not in i['chosen'] and i['chosen'] not in i['rejected'] and i['rejected'] != i['chosen'], f"{i['rejected']}\n{i['chosen']}"
+        assert 'rejected' in i and i['rejected'] not in i['chosen'] and i['chosen'] not in i['rejected'] and i['rejected'] != i['chosen'], f"{i['rejected']}\n{i['chosen']}"
         i['neg'] = top8_neg
         assert len(i['pos']) == 1 and len(i['neg']) == 8, f"{len(i['pos'])}\t{len(i['neg'])}"
         if i['pos'][0] in i['neg']:

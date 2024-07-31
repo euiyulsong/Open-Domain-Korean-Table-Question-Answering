@@ -15,23 +15,27 @@ from src.metrics.ko_f1 import *
 import random
 import numpy as np
 import gc
-
-
-
-
+import wandb
+import datetime
 
 if __name__ == "__main__":
     huggingface_hub.login(token=os.getenv("HF_ACCESS_TOKEN"))
-
+    wandb.login(key=os.getenv("WANDB_TOKEN"), relogin=True)
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--model_name", help="model_name", type=str, default="google/gemma-2b", required=False)
-    parser.add_argument("-d", "--dataset_name", help="Dataset name of huggingface repo", type=str, default="kkt_cd_inst", required=False)
+    parser.add_argument("-m", "--model_name", help="model_name", type=str, default="/mnt/c/Users/thddm/Documents/model/kor_wiki_quad_od_instruct", required=False)
+    parser.add_argument("-d", "--dataset_name", help="Dataset name of huggingface repo", type=str, default="kkt_synth_od_sft", required=False)
     parser.add_argument("-o", "--output_name", help="Output name of the trained model", type=str, default="/mnt/c/Users/thddm/Documents/model")
     parser.add_argument("-t", "--debug_mode", help="Determines if debug mode", default=False, action="store_true")
     parser.add_argument("-s", "--do_train", help="Determines if train mode", default=False, action="store_true")
     parser.add_argument("-e", "--do_eval", help="Determines if eval mode", default=False, action="store_true")
     args = parser.parse_args()
-    model_hp = {"kkt_rag_inst": {"max_seq_length": 1501, "batch_size": 8}, "kkt_cd_inst": {"max_seq_length": 153, "batch_size": 64}}
+
+    model_hp = {"kkt_synth_od_sft": {"max_seq_length": 1411, "batch_size": 8, "lr": 2e-5}, 
+                "kkt_od_inst": {"max_seq_length": 1411, "batch_size": 8, "lr": 2e-4},
+                "kkt_cd_inst": {"max_seq_length": 153, "batch_size": 64,  "lr": 2e-4},
+                "kor_wiki_quad_od_instruct": {"max_seq_length": 1411, "batch_size": 8,  "lr": 2e-4}}
+    wandb.init(project=os.getenv("WANDB_PROJECT"), entity=os.getenv("WANDB_ID"), name=f"reader/{args.dataset_name}/{str(datetime.datetime.now()).replace(" ", "")}")
+
     args.output_name = os.path.join(f"{args.output_name}", args.dataset_name)
     dataset = load_dataset(
         f"euiyulsong/{args.dataset_name}",
@@ -110,7 +114,7 @@ if __name__ == "__main__":
     print('Model pad token ID:', model.pad_token_id)
     print('Model config pad token ID:', model.config.pad_token_id)
     print('Number of tokens now in tokenizer:', tokenizer.vocab_size)
-    special_tokens_dict = {'additional_special_tokens': ['TABLE::', '##질문:', '##문맥:', '##답변:', '<start_of_turn>user', '<end_of_turn>', '<start_of_turn>model']}
+    special_tokens_dict = {'additional_special_tokens': ['[질문]:', '[문맥]:', '[답변]:']}
     tokenizer.add_special_tokens(special_tokens_dict)
     model.resize_token_embeddings(len(tokenizer))
     if args.debug_mode:
@@ -144,9 +148,11 @@ if __name__ == "__main__":
         actual = tokenizer.batch_decode(labels, skip_special_tokens=True)
         if args.debug_mode:
             print(prediction, actual)
-        return {"em": exact_match_score(prediction, actual), "f1": f1_score(prediction, actual), "rouge-l": rouge_l_score(prediction, actual)}
+        eval_result = {"em": exact_match_score(prediction, actual), "f1": f1_score(prediction, actual), "rouge-l": rouge_l_score(prediction, actual)}
+        wandb.log(eval_result)
+        return eval_result
     training_arguments = TrainingArguments(
-        output_dir=args.output_name,
+        output_dir=args.output_name if args.do_train else "/home/euiyul/tmp",
         num_train_epochs=1 if args.do_train else 0,
         per_device_train_batch_size=model_hp[args.dataset_name]['batch_size'],
         per_device_eval_batch_size=model_hp[args.dataset_name]['batch_size'], 
@@ -154,7 +160,7 @@ if __name__ == "__main__":
         optim="paged_adamw_8bit",
         save_steps=500,
         logging_steps=500,
-        learning_rate=2e-4,
+        learning_rate=model_hp[args.dataset_name]['lr'],
         weight_decay=0.001,
         bf16=bf16,
         do_train=args.do_train,
@@ -172,8 +178,8 @@ if __name__ == "__main__":
     trainer = SFTTrainer(
         model=model,
         train_dataset=dataset['train'],
-        eval_dataset=dataset['test'],
-        data_collator=DataCollatorForCompletionOnlyLM(response_template="<start_of_turn>model", tokenizer=tokenizer),
+        eval_dataset=dataset['test'] if args.do_eval else None,
+        data_collator=DataCollatorForCompletionOnlyLM(response_template="<start_of_turn>model\n", tokenizer=tokenizer),
         peft_config=config,
         max_seq_length=model_hp[args.dataset_name]['max_seq_length'],
         dataset_text_field="text",

@@ -22,15 +22,18 @@ if __name__ == "__main__":
     huggingface_hub.login(token=os.getenv("HF_ACCESS_TOKEN"))
     wandb.login(key=os.getenv("WANDB_TOKEN"), relogin=True)
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--model_name", help="model_name", type=str, default="google/gemma-2b", required=False)
-    parser.add_argument("-d", "--dataset_name", help="Dataset name of huggingface repo", type=str, default="kor_wiki_quad_od_instruct", required=False)
+    parser.add_argument("-m", "--model_name", help="model_name", type=str, default="/mnt/c/Users/thddm/Documents/model/kor_wiki_quad_od_instruct", required=False)
+    parser.add_argument("-d", "--dataset_name", help="Dataset name of huggingface repo", type=str, default="kkt_synth_od_sft", required=False)
     parser.add_argument("-o", "--output_name", help="Output name of the trained model", type=str, default="/mnt/c/Users/thddm/Documents/model")
     parser.add_argument("-t", "--debug_mode", help="Determines if debug mode", default=False, action="store_true")
     parser.add_argument("-s", "--do_train", help="Determines if train mode", default=False, action="store_true")
     parser.add_argument("-e", "--do_eval", help="Determines if eval mode", default=False, action="store_true")
     args = parser.parse_args()
 
-    model_hp = {"kkt_od_inst": {"max_seq_length": 1410, "batch_size": 8}, "kkt_cd_inst": {"max_seq_length": 153, "batch_size": 64}, "kor_wiki_quad_od_instruct": {"max_seq_length": 1410, "batch_size": 8}}
+    model_hp = {"kkt_synth_od_sft": {"max_seq_length": 1411, "batch_size": 8, "lr": 2e-5}, 
+                "kkt_od_inst": {"max_seq_length": 1411, "batch_size": 8, "lr": 2e-4},
+                "kkt_cd_inst": {"max_seq_length": 153, "batch_size": 64,  "lr": 2e-4},
+                "kor_wiki_quad_od_instruct": {"max_seq_length": 1411, "batch_size": 8,  "lr": 2e-4}}
     wandb.init(project=os.getenv("WANDB_PROJECT"), entity=os.getenv("WANDB_ID"), name=f"reader/{args.dataset_name}/{str(datetime.datetime.now()).replace(" ", "")}")
 
     args.output_name = os.path.join(f"{args.output_name}", args.dataset_name)
@@ -149,7 +152,7 @@ if __name__ == "__main__":
         wandb.log(eval_result)
         return eval_result
     training_arguments = TrainingArguments(
-        output_dir=args.output_name,
+        output_dir=args.output_name if args.do_train else "/home/euiyul/tmp",
         num_train_epochs=1 if args.do_train else 0,
         per_device_train_batch_size=model_hp[args.dataset_name]['batch_size'],
         per_device_eval_batch_size=model_hp[args.dataset_name]['batch_size'], 
@@ -157,7 +160,7 @@ if __name__ == "__main__":
         optim="paged_adamw_8bit",
         save_steps=500,
         logging_steps=500,
-        learning_rate=2e-4,
+        learning_rate=model_hp[args.dataset_name]['lr'],
         weight_decay=0.001,
         bf16=bf16,
         do_train=args.do_train,
