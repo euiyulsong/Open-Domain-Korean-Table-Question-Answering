@@ -23,12 +23,12 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 ### Reader
 | Method | EM | F-1 | Rouge-L |
 | ------------- | ------------- | ------------- |------------- |
-| SFT | 0  | 5.13  | 14.39 |
-| RAFT | 0 | 3.423  | 77.136 |
-| Inst | 0 |  3.4000 | 89.71 | 
-| Inst + Synthetic RAFT | 0  | 3.404  | 90.426 |
-| Inst + Synthetic RAFT + RAFT |  0  | 3.388  | 90.305 |
-| Inst + Synthetic RAFT + SimPO  |  0 | 3.407  | 90.746| 
+| SFT (Close-book) | 0  | 2.959  | 10.614 |
+| SFT (Open-book) | 0 | 3.423  | 77.136 |
+| Instruction Tuning | 0 |  3.4000 | 89.71 | 
+| Instruction Tuning + Synthetic SFT | 0  | 3.404  | 90.426 |
+| Instruction Tuning + Synthetic SFT + SFT |  0  | 3.388  | 90.305 |
+| Instruction Tuning + Synthetic SFT + SimPO  |  0 | 3.407  | 90.746| 
 
 
 ## Directory Structure
