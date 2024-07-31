@@ -1,0 +1,18 @@
+torchrun --nproc_per_node 1\
+    -m FlagEmbedding.baai_general_embedding.finetune.run \
+    --output_dir /mnt/c/Users/thddm/Documents/model/kkt-bge-m3-dense-synthetic-sft \
+    --model_name_or_path /mnt/c/Users/thddm/Documents/model/kkt-bge-m3-dense-synthetic \
+    --train_data /mnt/c/Users/thddm/Documents/dataset/retrieval \
+    --learning_rate 1e-6 \
+    --num_train_epochs 1 \
+    --per_device_train_batch_size 2 \
+    --dataloader_drop_last True \
+    --normlized True \
+    --temperature 0.02 \
+    --query_max_len 54 \
+    --passage_max_len 560 \
+    --train_group_size 9 \
+    --negatives_cross_device \
+    --logging_steps 10 \
+    --save_steps 1000 \
+    --query_instruction_for_retrieval "" 

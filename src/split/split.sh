@@ -1,0 +1,3 @@
+shuf /mnt/c/Users/thddm/Documents/dataset/cleaned_filtered_mapped_rlaif_dataset.jsonl > /mnt/c/Users/thddm/Documents/dataset/cleaned_dataset_shuf.jsonl
+head -n 664 /mnt/c/Users/thddm/Documents/dataset/cleaned_dataset_shuf.jsonl > /mnt/c/Users/thddm/Documents/dataset/train.jsonl
+tail -n 664 /mnt/c/Users/thddm/Documents/dataset/cleaned_dataset_shuf.jsonl > /mnt/c/Users/thddm/Documents/dataset/test.jsonl
