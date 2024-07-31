@@ -56,7 +56,9 @@ bash src/split/split.sh
 ### Synthetic Data Generation
 ```
 python src/synthetic/question_generation.py # question generation
-python src/synthetic/answer_generation.py # qnswer generation
+python src/synthetic/answer_generation.py #answer generation
+python src/synthetic/refine_generation.py #self-refine generation
+python src/synthetic/filter.py #consistent-based filtering (sort by l2 distance to the train label)
 ```
 
 ## Retrieval
