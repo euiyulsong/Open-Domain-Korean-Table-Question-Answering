@@ -36,15 +36,16 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | Method | EM | F-1 | Rouge-L | Training Time | 
 | ------------- | ------------- | ------------- |------------- | ------------- |
 | SFT (Close-book) | 0 | 5.277  | 14.883 | 51.81 |
-| SFT (Open-book) | 0 | 3.852  | 90.938 | 
-| Instruction Tuning | 0 |   |  | 8,017.02 |
+| TAPT + SFT (Close-book) | 0 |   |  | 514.2573 + |
+| SFT (Open-book) | 0 | 3.852  | 90.938 | 2069.1573 |
+| Instruction Tuning | 0 |  3.378 | 91.948 | 8,017.02 |
 | Instruction Tuning + Synthetic SFT | 0  |   |  | 3034.3011 |
 | Instruction Tuning + Synthetic SFT + SimPO  |  0 |   |  | 2069.1573 |
 
 #### google/gemma-2b-it (float16)
 | Method | EM | F-1 | Rouge-L |
 | ------------- | ------------- | ------------- |------------- |
-| SFT (Open-book) | 0 | 5.571  | 90.53 |
+| SFT (Open-book) | 0 | 5.571  | 90.53 |  |
 
 
 ## Directory Structure
