@@ -35,7 +35,7 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 #### google/gemma-2b, float16 Variant
 | Method | EM | F-1 | Rouge-L |
 | ------------- | ------------- | ------------- |------------- |
-| SFT (Open-book) |  |   |  |
+| SFT (Open-book) | 0 | 3.852  | 90.938 |
 | Instruction Tuning |  |   |  |
 | Instruction Tuning + Synthetic SimPO |  |   |  |
 | Instruction Tuning + Synthetic SimPO + SimPO  |  |   |  |
