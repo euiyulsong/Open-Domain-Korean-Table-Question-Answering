@@ -36,7 +36,7 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | Method | EM | F-1 | Rouge-L | Training Time | 
 | ------------- | ------------- | ------------- |------------- | ------------- |
 | SFT (Close-book) | 0 | 5.277  | 14.883 | 51.81 |
-| TAPT + SFT (Close-book) | 0 |   |  | 514.2573 + |
+| TAPT + SFT (Close-book) | 0 |   |  | 514.2573 + 42.5094 |
 | SFT (Open-book) | 0 | 3.852  | 90.938 | 335.8971 |
 | Instruction Tuning | 0 |  3.378 | 91.948 | 8,017.02 |
 | Instruction Tuning + Synthetic SFT | 0  | 3.538  | 92.315 | 3034.3011 |
