@@ -48,7 +48,7 @@ if __name__ in "__main__":
     Concat three dataset: cat synthetic_qa_v2_wrong_refine.jsonl synthetic_qa_v2_wrong_refine_error_refine.jsonl synthetic_qa_v2_rlaif.jsonl | shuf > synthetic_qa_v2_concat_refine_step2.jsonl
     Remaining Errors: synthetic_qa_v2_wrong_refine_error_refine_error.jsonl
     """
-    is_korquad = True
+    is_korquad = False
     f = open("/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_concat_refine_step2.jsonl", "r", encoding="utf-8")
     w = open("/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2.jsonl", "w", encoding="utf-8")
     ww = open("/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2_wrong.jsonl", "w", encoding="utf-8")
@@ -139,6 +139,11 @@ if __name__ in "__main__":
                     i['neg'].append(o)
                 if len(i['neg']) >= 8:
                     break
+        i['tables'] = i['pos'] + i['neg'][:4]
+        if len(i['tables']) != 5:
+            raise()
+        random.shuffle(i['tables'])
+        i['table'] = "\n\n".join(i['tables'])
         if len(i['neg']) < 8:
             raise Exception(f"{len(i['neg'])}")
         corpus_neg = i['neg']

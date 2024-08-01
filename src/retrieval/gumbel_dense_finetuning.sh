@@ -1,5 +1,5 @@
 torchrun --nproc_per_node 1\
-    src/retrieval/stochastic_rag/FlagEmbedding/baai_general_embedding/finetune/run.py \
+    -m src.retrieval.stochastic_rag.FlagEmbedding.baai_general_embedding.finetune.run \
     --output_dir /mnt/c/Users/thddm/Documents/model/kkt-bge-m3-stochastic-dense \
     --model_name_or_path BAAI/bge-m3 \
     --train_data /mnt/c/Users/thddm/Documents/dataset/retrieval \

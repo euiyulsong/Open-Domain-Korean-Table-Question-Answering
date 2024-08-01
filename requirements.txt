@@ -21,4 +21,5 @@ scipy
 konlpy
 open-ai
 wandb
+plotly
 

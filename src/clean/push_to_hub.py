@@ -6,6 +6,7 @@ import huggingface_hub
 import os
 import random
 from transformers import AutoTokenizer
+from pprint import pprint
 if __name__ == "__main__":
     huggingface_hub.login(token=os.getenv("HF_ACCESS_TOKEN"))
     parser = argparse.ArgumentParser()
@@ -18,8 +19,12 @@ if __name__ == "__main__":
     """
     Korwiki, Korquad Instruct-FT
     """
-    parser.add_argument("-d", "--input_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2.jsonl", required=False)
-    parser.add_argument("-o", "--output_name", help="Output huggingface repo name to save", type=str, default="kkt_synth_od_sft", required=False)
+    # parser.add_argument("-d", "--input_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2.jsonl", required=False)
+    """
+    KKT Corpus
+    """
+    parser.add_argument("-d", "--input_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/retrieved_train.jsonl", required=False)
+    parser.add_argument("-o", "--output_name", help="Output huggingface repo name to save", type=str, default="kkt_cd_simpo", required=False)
     parser.add_argument("-v", "--view", help="View dataset", default=False, action="store_true")
     parser.add_argument("-s", "--split", help="Dataset split", type=str, default="train", required=False)
     parser.add_argument("-m", "--model_name", help="Model name for tokenization", type=str, default="google/gemma-2b", required=False)
@@ -58,6 +63,9 @@ if __name__ == "__main__":
         output = []
         for i in tqdm(f):
             i = json.loads(i)
+            if 'corpus' in args.output_name:
+                output.append({"text": i['content']})
+                continue
             if 'od' in args.output_name:
 
                 text = f"<start_of_turn>user\n{random.sample(od_instructions, 1)[0]}\n\n[질문]: {i['question']}\n\n[문맥]: {i['table']}\n\n[답변]: <end_of_turn>\n<start_of_turn>model\n{i['answer']}<end_of_turn>"
@@ -71,7 +79,10 @@ if __name__ == "__main__":
                     chosen = f"{i['answer']}<end_of_turn>"
 
             else:
-                text = f"<start_of_turn>user\n{random.sample(cd_instructions, 1)[0]}\n\n[질문]: {i['question']}\n\n[답변]: <end_of_turn>\n<start_of_turn>model\n{i['answer']}<end_of_turn>"
+                if "simpo" in args.output_name:
+                    rejected = f"{i['rejected']}<end_of_turn>"
+                    chosen = f"{i['answer']}<end_of_turn>"
+                    text = f"<start_of_turn>user\n{random.sample(cd_instructions, 1)[0]}\n\n[질문]: {i['question']}\n\n[답변]: <end_of_turn>\n<start_of_turn>model\n{i['answer']}<end_of_turn>"
             if "simpo" not in args.output_name:
                 output.append({"text": text})
             else:
@@ -90,22 +101,28 @@ if __name__ == "__main__":
         max_length = 0
         bigger_than_1410 = 0
         count_invalid=0
+        lengths = []
         for idx, i in enumerate(iter(dataset)):
-            answer = i['text'].split("<start_of_turn>model\n")[1].split("<end_of_turn>")[0]
-            if idx == 0:
-                print(answer)
-                print("-" * 10)
-            if answer not in i['text']:
-                count_invalid+=1
+            if 'corpus' not in args.output_name:
+                answer = i['text'].split("<start_of_turn>model\n")[1].split("<end_of_turn>")[0]
+
+                if idx == 0:
+                    print(answer)
+                    print("-" * 10)
+                if answer not in i['text']:
+                    count_invalid+=1
             current_length = len(tokenizer.encode(i['text']))
             if current_length > 1411:
                 bigger_than_1410+=1
             max_length = max(current_length, max_length)
+            lengths.append(current_length)
             if idx == 0:
-                print(i['text'])
+                pprint({j: i[j] for j in ["prompt", "chosen", "rejected", "text"] if j in i})
+        lengths.sort()
         print(f"Count longer than 1411: {bigger_than_1410}")
         print(f"Count invalid: {count_invalid}")
         print(f"Dataset: {args.output_name}")
         print(f"Split: {args.split}")
         print(f"Dataset Size: {len(dataset)}")
         print(f"Max Length: {max_length}")
+        print(f"98%: {lengths[int(round(len(lengths)*.98+1, 0))]}")

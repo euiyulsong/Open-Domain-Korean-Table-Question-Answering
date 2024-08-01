@@ -1,8 +1,25 @@
 import logging
 import random
 import sys
-
+from transformers import TrainingArguments
+import random
+import os
+import argparse
+from datasets import load_dataset
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 import torch
+from peft import LoraConfig, get_peft_model
+from peft import prepare_model_for_kbit_training
+from transformers import TrainingArguments
+from trl import SFTTrainer, DataCollatorForCompletionOnlyLM 
+import huggingface_hub
+from src.metrics.ko_em import *
+from src.metrics.ko_rouge import *
+from src.metrics.ko_f1 import *
+import random
+import numpy as np
+
+import wandb
 import transformers
 from transformers import AutoModelForCausalLM, set_seed
 
@@ -34,6 +51,8 @@ class SimPOConfig(DPOConfig):
     )
 
 def main():
+    huggingface_hub.login(token=os.getenv("HF_ACCESS_TOKEN"))
+    wandb.login(key=os.getenv("WANDB_TOKEN"), relogin=True)
     parser = H4ArgumentParser((ModelArguments, DataArguments, SimPOConfig))
     model_args, data_args, training_args = parser.parse()
 
@@ -60,7 +79,7 @@ def main():
 
 
     raw_datasets = get_datasets(
-        "/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2.jsonl",
+        "kkt_od_simpo",
         splits=data_args.dataset_splits,
         configs=data_args.dataset_configs,
         columns_to_keep=["chosen", "rejected", "prompt"],
@@ -74,55 +93,112 @@ def main():
         logger.info(f"Chosen sample {index} of the raw training set:\n\n{raw_datasets['train'][index]['chosen']}")
         logger.info(f"Rejected sample {index} of the raw training set:\n\n{raw_datasets['train'][index]['rejected']}")
 
-    torch_dtype = (
-        model_args.torch_dtype if model_args.torch_dtype in ["auto", None] else getattr(torch, model_args.torch_dtype)
+
+    model_name = ""
+    use_4bit = True
+    use_nested_quant = False
+    bnb_4bit_compute_dtype = "float16"
+    bnb_4bit_quant_type = "nf4"
+    compute_dtype = getattr(torch, bnb_4bit_compute_dtype)
+    fp16 = True
+    bf16 = False
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=use_4bit,
+        bnb_4bit_quant_type=bnb_4bit_quant_type,
+        bnb_4bit_compute_dtype=compute_dtype,
+        bnb_4bit_use_double_quant=use_nested_quant,
     )
-    quantization_config = get_quantization_config(model_args)
 
-    model_kwargs = dict(
-        revision=model_args.model_revision,
-        trust_remote_code=model_args.trust_remote_code,
-        use_flash_attention_2=model_args.use_flash_attention_2,
-        torch_dtype=torch_dtype,
-        use_cache=False if training_args.gradient_checkpointing else True,
-        device_map=get_kbit_device_map() if quantization_config is not None else None,
-        quantization_config=quantization_config,
+    def preprocess_logits_for_metrics(logits, labels):
+        if isinstance(logits, tuple):
+            logits = logits[0]
+        return logits.argmax(dim=-1)
+
+    def print_trainable_parameters(model):
+        trainable_params = 0
+        total_params = 0
+
+        for _, param in model.named_parameters():
+            total_params += param.numel()
+            if param.requires_grad:
+                trainable_params += param.numel()
+
+        trainable_percent = 100 * trainable_params / total_params
+
+        print(f"Trainable Parameters: {trainable_params}")
+        print(f"Total Parameters: {total_params}")
+        print(f"Trainable %: {trainable_percent:.2f}")
+    if compute_dtype == torch.float16 and use_4bit:
+        major, _ = torch.cuda.get_device_capability()
+        if major >= 8:
+            print("=" * 80)
+            print("Your GPU supports bfloat16, you can accelerate training with the argument --bf16")
+            print("=" * 80)
+
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        quantization_config=bnb_config, 
+        device_map='auto',
+        torch_dtype=compute_dtype)
+    model.config.use_cache = False
+    model.config.pretraining_tp = 1
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name, add_eos_token=True)
+    tokenizer.padding_side = "right"
+
+    if '<pad>' in tokenizer.get_vocab():
+        print('<pad> token is in the tokenizer. Using <pad> for pad')
+        # Set the pad token
+        tokenizer.pad_token = '<pad>'
+    elif '<unk>' in tokenizer.get_vocab():
+        print('<unk> token is in the tokenizer. Using unk for pad')
+        # Set the pad token
+        tokenizer.pad_token = '<unk>'
+    else:
+        print(f'Using EOS token, {tokenizer.eos_token}, for padding')
+        tokenizer.pad_token = tokenizer.eos_token
+
+    model.pad_token_id = tokenizer.pad_token_id
+    model.config.pad_token_id = tokenizer.pad_token_id
+
+    assert model.pad_token_id == tokenizer.pad_token_id, "The model's pad token ID does not match the tokenizer's pad token ID!"
+
+    print('Tokenizer pad token ID:', tokenizer.pad_token_id)
+    print('Model pad token ID:', model.pad_token_id)
+    print('Model config pad token ID:', model.config.pad_token_id)
+    print('Number of tokens now in tokenizer:', tokenizer.vocab_size)
+    special_tokens_dict = {'additional_special_tokens': ['[질문]:', '[문맥]:', '[답변]:']}
+    tokenizer.add_special_tokens(special_tokens_dict)
+    model.resize_token_embeddings(len(tokenizer))
+
+    #if model_args.use_peft is True:
+    ref_model = None
+    training_arguments = TrainingArguments(
+        output_dir="/mnt/c/Users/thddm/Documents/model/kkt-simpo",
+        num_train_epochs=1,
+        per_device_train_batch_size=4,
+        per_device_eval_batch_size=4, 
+        gradient_accumulation_steps=1,
+        optim="paged_adamw_8bit",
+        save_steps=500,
+        logging_steps=500,
+        learning_rate=2e-6,
+        weight_decay=0.001,
+        bf16=bf16,
+        do_train=args.do_train,
+        do_eval=args.do_eval,
+        fp16=fp16,
+        max_grad_norm=0.3,
+        max_steps=-1,
+        warmup_ratio=0.1,
+        group_by_length=True,
+        lr_scheduler_type="constant_with_warmup",
     )
-
-    model = model_args.model_name_or_path
-    if is_adapter_model(model, model_args.model_revision) is True:
-        logger.info(f"Loading SFT adapter for {model_args.model_name_or_path=}")
-        peft_config = PeftConfig.from_pretrained(model_args.model_name_or_path, revision=model_args.model_revision)
-        model_kwargs = dict(
-            revision=model_args.base_model_revision,
-            trust_remote_code=model_args.trust_remote_code,
-            use_flash_attention_2=model_args.use_flash_attention_2,
-            torch_dtype=torch_dtype,
-            use_cache=False if training_args.gradient_checkpointing else True,
-            device_map=get_kbit_device_map() if quantization_config is not None else None,
-            quantization_config=quantization_config,
-        )
-        base_model = AutoModelForCausalLM.from_pretrained(
-            peft_config.base_model_name_or_path,
-            **model_kwargs,
-        )
-        model = PeftModel.from_pretrained(
-            base_model,
-            model_args.model_name_or_path,
-            revision=model_args.model_revision,
-        )
-        model_kwargs = None
-
-    ref_model = model
-
-    if model_args.use_peft is True:
-        ref_model = None
-
     trainer = SimPOTrainer(
         model=model,
         ref_model=ref_model, 
         model_init_kwargs=model_kwargs,
-        args=training_args,
+        args=training_arguments,
         beta=training_args.beta,
         train_dataset=raw_datasets["train"],
         eval_dataset=raw_datasets["test"],
