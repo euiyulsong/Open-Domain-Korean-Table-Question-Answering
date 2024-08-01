@@ -14,11 +14,11 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | hard neg | 8 |  |  |
 | τ | 0.02 |  |  |
 ### Retrieval
-| Method | R-Precision | Recall@5 | TPS | 
-| ------------- | ------------- | ------------- | ------------- |
-| BM25 | 67.018 | 91.265 | 0.007s |
-| Dense |  73.343 | 95.03 | 0.44s |
-| Cross Encoder | 86.747 | 96.084 | 1.30s |
+| Method | R-Precision | Recall@5 | TPS | Training Time |
+| ------------- | ------------- | ------------- | ------------- | ------------- |
+| BM25 | 67.018 | 91.265 | 0.007s | 0s |
+| Dense |  73.343 | 95.03 | 0.44s | 858.0121s |
+| Cross Encoder | 86.747 | 96.084 | 1.30s | 800.346s |
 
 ### Reader
 
@@ -33,12 +33,13 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | Instruction Tuning + Synthetic SFT + SimPO  |  0 | **3.407**  | **90.746**| 
 
 #### google/gemma-2b (float16)
-| Method | EM | F-1 | Rouge-L |
-| ------------- | ------------- | ------------- |------------- |
-| SFT (Open-book) | 0 | 3.852  | 90.938 |
-| Instruction Tuning |  |   |  |
-| Instruction Tuning + Synthetic SimPO |  |   |  |
-| Instruction Tuning + Synthetic SimPO + SimPO  |  |   |  |
+| Method | EM | F-1 | Rouge-L | Training Time | 
+| ------------- | ------------- | ------------- |------------- | ------------- |
+| SFT (Close-book) | 0 | 5.277  | 14.883 | 51.81 |
+| SFT (Open-book) | 0 | 3.852  | 90.938 | 
+| Instruction Tuning | 0 |   |  | 8,017.02 |
+| Instruction Tuning + Synthetic SFT | 0  |   |  | 3034.3011 |
+| Instruction Tuning + Synthetic SFT + SimPO  |  0 |   |  | 2069.1573 |
 
 #### google/gemma-2b-it (float16)
 | Method | EM | F-1 | Rouge-L |
