@@ -14,21 +14,48 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | hard neg | 8 |  |  |
 | τ | 0.02 |  |  |
 ### Retrieval
-| Method | R-Precision | Recall@5 | TPS | 
-| ------------- | ------------- | ------------- | ------------- |
-| BM25 | 67.018 | 91.265 | 0.007s |
-| Dense |  73.343 | 95.03 | 0.44s |
-| Cross Encoder | 86.747 | 96.084 | 1.30s |
+| Method | R-Precision | Recall@5 | TPS | Training Time |
+| ------------- | ------------- | ------------- | ------------- | ------------- |
+| BM25 | 67.018 | 91.265 | 0.007s | 0s |
+| Dense |  73.343 | 95.03 | 0.44s | 858.0121s |
+| Cross Encoder | 86.747 | 96.084 | 1.30s | 800.346s |
 
 ### Reader
+
+#### google/gemma-2b (int4)
 | Method | EM | F-1 | Rouge-L |
 | ------------- | ------------- | ------------- |------------- |
-| SFT | 0  | 5.13  | 14.39 |
-| RAFT | 0 | 3.423  | 77.136 |
-| Inst | 0 |  3.4 | 89.71 | 
-| Inst + Synthetic RAFT |   |   | |
-| Inst + Synthetic RAFT + RAFT |   |   | |
-| Inst + Synthetic RAFT + SimPO  |   |   | |
+| SFT (Close-book) | 0  | 2.959  | 10.614 |
+| SFT (Open-book) | 0 | 3.423  | 77.136 |
+| Instruction Tuning | 0 |  3.4000 | 89.71 | 
+| Instruction Tuning + Synthetic SFT | 0  | 3.404  | 90.426 |
+| Instruction Tuning + Synthetic SFT + SFT |  0  | 3.388  | 90.305 |
+| Instruction Tuning + Synthetic SFT + SimPO  |  0 | **3.407**  | **90.746**| 
+
+~~#### google/gemma-2b (float16) ~~
+| Method | EM | F-1 | Rouge-L | Training Time | 
+| ------------- | ------------- | ------------- |------------- | ------------- |
+| SFT (Close-book) | 0 | 5.277  | 14.883 | 51.81 |
+| TAPT + SFT (Close-book) | 0 | 6.039  | 17.012 | 514.2573 + 42.5094 |
+| SFT (Open-book) | 0 | 3.852  | 90.938 | 335.8971 |
+| Instruction Tuning | 0 |  3.378 | 91.948 | 8,017.02 |
+| Instruction Tuning + Synthetic SFT | 0  | 3.538  | 92.315 | 3034.3011 |
+| Instruction Tuning + Synthetic SFT + SimPO  |  0 | 3.5343  | 93.0598 | 2069.1573 |
+
+#### google/gemma-2b (float16)
+| Method | EM | F-1 | Rouge-L | Training Time | 
+| ------------- | ------------- | ------------- |------------- | ------------- |
+| SFT (Close-book) | 0 |   | 14.883 | 51.81 |
+| TAPT + SFT (Close-book) | 0 | 6.039  | 17.012 | 514.2573 + 42.5094 |
+| SFT (Open-book) | 0 | 3.852  | 90.938 | 335.8971 |
+| Instruction Tuning | 0 |  3.378 | 91.948 | 8,017.02 |
+| Instruction Tuning + Synthetic SFT | 0  | 3.538  | 92.315 | 3034.3011 |
+| Instruction Tuning + Synthetic SFT + SimPO  |  0 | 3.5343  | 93.0598 | 2069.1573 |
+
+#### google/gemma-2b-it (float16)
+| Method | EM | F-1 | Rouge-L |
+| ------------- | ------------- | ------------- |------------- |
+| SFT (Open-book) | 0 | 5.571  | 90.53 |  |
 
 
 ## Directory Structure
