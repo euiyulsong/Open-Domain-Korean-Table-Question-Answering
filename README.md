@@ -22,7 +22,7 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 
 ### Reader
 
-#### google/gemma-2b, int4 Variant
+#### google/gemma-2b (int4)
 | Method | EM | F-1 | Rouge-L |
 | ------------- | ------------- | ------------- |------------- |
 | SFT (Close-book) | 0  | 2.959  | 10.614 |
@@ -32,7 +32,7 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | Instruction Tuning + Synthetic SFT + SFT |  0  | 3.388  | 90.305 |
 | Instruction Tuning + Synthetic SFT + SimPO  |  0 | **3.407**  | **90.746**| 
 
-#### google/gemma-2b, float16 Variant
+#### google/gemma-2b (float16)
 | Method | EM | F-1 | Rouge-L |
 | ------------- | ------------- | ------------- |------------- |
 | SFT (Open-book) | 0 | 3.852  | 90.938 |
@@ -40,7 +40,7 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | Instruction Tuning + Synthetic SimPO |  |   |  |
 | Instruction Tuning + Synthetic SimPO + SimPO  |  |   |  |
 
-#### google/gemma-2b-it, float16 Variant
+#### google/gemma-2b-it (float16)
 | Method | EM | F-1 | Rouge-L |
 | ------------- | ------------- | ------------- |------------- |
 | SFT (Open-book) | 0 | 5.571  | 90.53 |
