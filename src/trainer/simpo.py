@@ -1,6 +1,6 @@
 import os
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from peft import LoraConfig, get_peft_model
 from peft import prepare_model_for_kbit_training
@@ -25,9 +25,12 @@ def main():
     args = parser.parse_args()
 
     synthetic_simpo = {"name": "/mnt/c/Users/thddm/Documents/model/f32_instruction_tuning",
-                       "out": "/mnt/c/Users/thddm/Documents/model/f32_inst_tu_simpo_synthetic",
+                       "out": "/mnt/c/Users/thddm/Documents/model/f32_inst_tu_simpo_synthetic", 
                        "lr": 2e-6, "bs": 1, "dataname": "euiyulsong/kkt_synth_od_simpo"}
     
+    if args.is_float16:
+        synthetic_simpo['name'] = "/mnt/c/Users/thddm/Documents/model/kor_wiki_quad_od_instruct_f16"
+        synthetic_simpo['out'] = "/mnt/c/Users/thddm/Documents/model/inst_tu_simpo_synthetic_f16"
 
     simpo = {"name": "/mnt/c/Users/thddm/Documents/model/f32_inst_tu_simpo_synthetic",
              "out": "/mnt/c/Users/thddm/Documents/model/f32_inst_tu_simpo_synthetic_simpo_real",
@@ -117,6 +120,8 @@ def main():
         # quantization_config=bnb_config, 
         device_map='auto',
         torch_dtype=compute_dtype)
+    model.push_to_hub("euiyulsong/f32_insttuned", private=True)
+    raise()
     model.config.use_cache = False
     model.config.pretraining_tp = 1
 
