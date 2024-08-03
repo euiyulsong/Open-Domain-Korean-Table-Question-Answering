@@ -28,7 +28,7 @@ class CustomDataCollator:
             for key in ['input_ids', 'attention_mask']:
                 tobe[key].append([self.tokenizer.pad_token_id] * (max_input_length - len(feature[key])) + feature[key])
             tobe['labels'].append([self.tokenizer.pad_token_id] * (max_label_length - len(feature['label'])) + feature['label'])
-        features = BatchEncoding(tobe, self.tensor_type)
+        features = BatchEncoding(tobe, self.return_tensors)
         return features
 
 

@@ -4,13 +4,18 @@ from bs4 import BeautifulSoup
 import warnings
 import emoji
 import unicodedata
-import re
+import argparse
 from tqdm import tqdm
 warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
 
 if __name__ == "__main__":
-    dataset = load_dataset("KorQuAD/squad_kor_v2")
-    w = open("/mnt/c/Users/thddm/Documents/dataset/korquad.jsonl", "w", encoding="utf-8")
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-d", "--dataset_name", help="Dataset name of huggingface repo", type=str, default="KorQuAD/squad_kor_v2", required=False)
+    parser.add_argument("-m", "--output_path", help="Output path", type=str, default="/mnt/c/Users/thddm/Documents/dataset/korquad.jsonl")
+    args = parser.parse_args()
+    dataset = load_dataset(args.dataset_name)
+    w = open(args.output_path, "w", encoding="utf-8")
     cache = set()
     duplicates = 0
     extract_sets = set()
@@ -25,7 +30,6 @@ if __name__ == "__main__":
                 w.write(json.dumps(row, ensure_ascii=False) + "\n")
             else:
                 duplicates +=1
-
         
     w.close()
     print(f"Duplicates: {duplicates}")
