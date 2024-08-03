@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM, BatchEncoding
+from transformers import AutoTokenizer, BatchEncoding, AutoModelForCausalLM
 import argparse
 import torch
 from datasets import load_dataset
@@ -15,7 +15,7 @@ import time
 class CustomDataCollator:
     tokenizer: PreTrainedTokenizerBase
     return_tensors: str ="pt"
-    def __call__(self, features, ):
+    def __call__(self, features):
         label_length = [len(feature["label"]) for feature in features]
         input_ids_length = [len(feature['input_ids']) for feature in features]
         max_label_length = max(label_length)
@@ -28,14 +28,13 @@ class CustomDataCollator:
             for key in ['input_ids', 'attention_mask']:
                 tobe[key].append([self.tokenizer.pad_token_id] * (max_input_length - len(feature[key])) + feature[key])
             tobe['labels'].append([self.tokenizer.pad_token_id] * (max_label_length - len(feature['label'])) + feature['label'])
-        features = BatchEncoding(tobe, self.return_tensors)
+        features = BatchEncoding(tobe, tensor_type=self.return_tensors)
         return features
 
 
-def compute_metrics(eval_preds, tokenizer):
+def compute_metrics(eval_preds):
     preds, labels = eval_preds
     eval_result = {"em": exact_match_score(preds, labels), "f1": f1_score(preds, labels), "rouge-l": rouge_l_score(preds, labels)}
-
     return eval_result
 
 class CustomDataset(torch.utils.data.Dataset):
@@ -100,14 +99,12 @@ if __name__ in "__main__":
         tokenized['input_ids'] = tokenized['input_ids'][:-1]
         tokenized['attention_mask'] = tokenized['attention_mask'][:-1]
         tokenized['label'] = tokenizer.encode(answer)[:-1]
-        if idx == 0:
-            print(tokenized)
         datasets.append(tokenized)
 
     sizes = len(datasets)
     end = 107
     datasets = CustomDataset(datasets)
-    model.to("cuda")
+    # model.to("cuda")
     preds = []
     labels = []
 
@@ -136,7 +133,7 @@ if __name__ in "__main__":
                 break
 
         end = time.time()
-        out = compute_metrics([preds, labels], tokenizer)
+        out = compute_metrics([preds, labels])
         out['evaltime'] = end - start
         out['size_dataset'] = sizes
         wandb.log(out)
