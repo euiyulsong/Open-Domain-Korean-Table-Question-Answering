@@ -1,48 +1,31 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM, BatchEncoding
+from transformers import AutoTokenizer, AutoModelForCausalLM 
 import argparse
 import torch
+import transformers
 from datasets import load_dataset
+import datetime
 from tqdm import tqdm
 from src.metrics.ko_em import *
 from src.metrics.ko_rouge import *
 from src.metrics.ko_f1 import *
 import wandb
-from dataclasses import dataclass
-from typing import Union
-from transformers.file_utils import PaddingStrategy
-from transformers.tokenization_utils_base import PreTrainedTokenizerBase
-import time
-
-@dataclass
-class CustomDataCollator:
-    tokenizer: PreTrainedTokenizerBase
-
-    def __call__(self, features):
-        label_length = [len(feature["label"]) for feature in features]
-        input_ids_length = [len(feature['input_ids']) for feature in features]
-
-
-        max_label_length = max(label_length)
-        max_input_length = max(input_ids_length)
-        tobe = {}
-        tobe['labels'] = []
-        tobe['input_ids'] = []
-        tobe['attention_mask'] = []
-        for _, feature in enumerate(features):
-            for key in ['input_ids', 'attention_mask']:
-                tobe[key].append([self.tokenizer.pad_token_id] * (max_input_length - len(feature[key])) + feature[key])
-            tobe['labels'].append([self.tokenizer.pad_token_id] * (max_label_length - len(feature['label'])) + feature['label'])
-        features = BatchEncoding(tobe, tensor_type=self.return_tensors)
-        return features
-
 
 def compute_metrics(eval_preds, tokenizer):
-    preds, labels = eval_preds
+    preds, labels, prompts = eval_preds
+    # labels = np.array(labels)
+    # labels = np.where(labels == -100, tokenizer.pad_token_id, labels)
+
+
+
+    # prediction = tokenizer.batch_decode(preds, skip_special_tokens=True)
+    # actual = tokenizer.batch_decode(labels, skip_special_tokens=True)
+    # prompts = tokenizer.batch_decode(prompts, skip_special_tokens=True)
+
+    # print(prediction[0])
+    # print(actual[0])
     eval_result = {"em": exact_match_score(preds, labels), "f1": f1_score(preds, labels), "rouge-l": rouge_l_score(preds, labels)}
-
     return eval_result
-
-class CustomDataset(torch.utils.data.Dataset):
+class QADataset(torch.utils.data.Dataset):
     def __init__(self, instance):
         super().__init__()
         self.instance = instance
@@ -53,8 +36,7 @@ class CustomDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         current = self.instance[idx]
         return self.instance[idx]
-    
-
+import time
 if __name__ in "__main__":
 
     parser = argparse.ArgumentParser()
@@ -63,7 +45,7 @@ if __name__ in "__main__":
     parser.add_argument("-m", "--model_name", help="Output name of the trained model", type=str, default="kkt_instruction_tune_synth_sft_synth_simpo_f16")
     args = parser.parse_args()
     args.model_name = "/mnt/c/Users/thddm/Documents/model/" + args.model_name
-    config = {"kkt_od_inst": {"max_seq_length": 1420, "batch_size": 5}, "kkt_cd_inst": {"max_seq_length": 176, "batch_size": 128}} # type: ignore
+    config = {"kkt_od_inst": {"max_seq_length": 1420, "batch_size": 16}, "kkt_cd_inst": {"max_seq_length": 176, "batch_size": 128}} # type: ignore
     config = config[args.dataset_name]
     wandb.login(key=os.getenv("WANDB_TOKEN"), relogin=True)
     wandb.init(project=os.getenv("WANDB_PROJECT"), entity=os.getenv("WANDB_ID"), name=f"eval/{args.model_name}")
@@ -81,7 +63,7 @@ if __name__ in "__main__":
     model.config.use_cache = False
     model.config.pretraining_tp = 1
 
-    tokenizer.padding_side = "left"
+    #tokenizer.padding_side = "right"
 
     if '<pad>' in tokenizer.get_vocab():
         print('<pad> token is in the tokenizer. Using <pad> for pad')
@@ -98,50 +80,46 @@ if __name__ in "__main__":
     model.pad_token_id = tokenizer.pad_token_id
     model.config.pad_token_id = tokenizer.pad_token_id
     datasets = []
-    for idx, i in enumerate(iter(dataset['test'])):
+    for i in iter(dataset['test']):
         splited = i['text'].split("<start_of_turn>model\n")
         prompt = splited[0].strip() + "<start_of_turn>model\n"
         answer = splited[1].split("<end_of_turn>")[0].strip()
-        tokenized = tokenizer(prompt)
-        tokenized['input_ids'] = tokenized['input_ids'][:-1]
-        tokenized['attention_mask'] = tokenized['attention_mask'][:-1]
-        tokenized['label'] = tokenizer.encode(answer)[:-1]
-        if idx == 0:
-            print(tokenized)
+        tokenized = tokenizer(prompt, return_tensors="pt")
+        print(tokenizer.batch_decode(tokenized['input_ids']))
+        tokenized['input_ids'] = tokenized['input_ids'][:, :-1]
+        print(tokenizer.batch_decode(tokenized['input_ids']))
+        tokenized['attention_mask'] = tokenized['attention_mask'][:, :-1]
+        raise()
+
+        tokenized['labels'] = tokenizer.encode(answer, return_tensors="pt")
         datasets.append(tokenized)
     sizes = len(datasets)
     end = 107
-    datasets = CustomDataset(datasets)
+    #datasets = QADataset(datasets)
     model.to("cuda")
     preds = []
     labels = []
-
+    prompts = []
     with torch.no_grad():
-        dataloader = torch.utils.data.DataLoader(datasets, batch_size=config['batch_size'], collate_fn=CustomDataCollator(tokenizer=tokenizer))
+        #dataloader = torch.utils.data.DataLoader(datasets, batch_size=1, collate_fn=None)#transformers.DataCollatorWithPadding(tokenizer))
         start = time.time()
-        for idx, i in tqdm(enumerate(dataloader)):
+        for idx, i in tqdm(enumerate(datasets)):
             label = i['labels']
             prompt = i['input_ids']
+            del i['labels']
+
             i.to("cuda")
 
+            
             output = model.generate(**i, eos_token_id=tokenizer.eos_token_id, max_length=config['max_seq_length'])
             output = output.cpu().detach().numpy().tolist()
-            prompt = tokenizer.batch_decode(prompt, skip_special_tokens=True)
-            output = tokenizer.batch_decode(output, skip_special_tokens=True)
-            for idx2, (p, o) in enumerate(zip(prompt, output)):
-                output[idx2] = o[len(p): ].strip()
+            prompt = tokenizer.decode(prompt[0], skip_special_tokens=True).strip()
+            output = tokenizer.decode(output[0], skip_special_tokens=True)[len(prompt):].strip()
+            label = tokenizer.decode(label[0], skip_special_tokens=True).strip()
 
-            label = tokenizer.batch_decode(label, skip_special_tokens=True)
-            for idx2, l in enumerate(label):
-                label[idx2] = l.strip()
-
-            preds.extend(output)
-            labels.extend(label)
-            if idx == 0:
-                break
 
         end = time.time()
-        out = compute_metrics([preds, labels], tokenizer)
-        out['evaltime'] = end - start
-        out['size_dataset'] = sizes
+        out = compute_metrics([preds, labels, prompts], tokenizer)
+        out['time'] = end - start
+        out['size'] = sizes
         wandb.log(out)

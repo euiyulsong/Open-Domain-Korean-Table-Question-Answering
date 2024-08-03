@@ -352,7 +352,7 @@ class Rouge:
             # scores = {**scores, **self._get_scores_rouge_l_or_w(hypothesis, references, True)}
 
 
-        return {k : v['r'] for k, v in scores.items() if k == "rouge-l"}['rouge-l']
+        return {k : v['f'] for k, v in scores.items() if k == "rouge-l"}['rouge-l']
 
 
     def _get_scores_rouge_n(self, all_hypothesis, all_references):
