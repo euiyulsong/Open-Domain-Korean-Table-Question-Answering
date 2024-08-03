@@ -1,9 +1,0 @@
-
-
-Training Instruct: 15096.1079
-wandb:                     eval/em 0.0
-wandb:                     eval/f1 0.03191
-wandb:                   eval/loss 0.61841
-wandb: eval/model_preparation_time 0.0024
-wandb:                eval/rouge-l 0.47015
-

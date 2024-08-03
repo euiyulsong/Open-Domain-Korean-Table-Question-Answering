@@ -26,8 +26,14 @@ class CustomDataCollator:
         tobe['attention_mask'] = []
         for _, feature in enumerate(features):
             for key in ['input_ids', 'attention_mask']:
-                tobe[key].append([self.tokenizer.pad_token_id] * (max_input_length - len(feature[key])) + feature[key])
-            tobe['labels'].append([self.tokenizer.pad_token_id] * (max_label_length - len(feature['label'])) + feature['label'])
+                if self.tokenizer.padding_side == "left":
+                    tobe[key].append([self.tokenizer.pad_token_id] * (max_input_length - len(feature[key])) + feature[key])
+                else:
+                    tobe[key].append(feature[key] + [self.tokenizer.pad_token_id] * (max_input_length - len(feature[key])))
+            if self.tokenizer.padding_side == "left":
+                tobe['labels'].append([self.tokenizer.pad_token_id] * (max_label_length - len(feature['label'])) + feature['label'])
+            else:
+                tobe['labels'].append(feature['label'] + [self.tokenizer.pad_token_id] * (max_label_length - len(feature['label'])))
         features = BatchEncoding(tobe, tensor_type=self.return_tensors)
         return features
 
@@ -35,6 +41,8 @@ class CustomDataCollator:
 def compute_metrics(eval_preds):
     preds, labels = eval_preds
     eval_result = {"em": exact_match_score(preds, labels), "f1": f1_score(preds, labels), "rouge-l": rouge_l_score(preds, labels)}
+    for i in eval_result:
+        eval_result[i] = round(eval_result[i] * 100, 3)
     return eval_result
 
 class CustomDataset(torch.utils.data.Dataset):
@@ -58,7 +66,7 @@ if __name__ in "__main__":
     parser.add_argument("-m", "--model_name", help="Output name of the trained model", type=str, default="kkt_instruction_tune_synth_sft_synth_simpo_f16")
     args = parser.parse_args()
     args.model_name = "/mnt/c/Users/thddm/Documents/model/" + args.model_name
-    config = {"kkt_od_inst": {"max_seq_length": 1420, "batch_size": 5}, "kkt_cd_inst": {"max_seq_length": 176, "batch_size": 128}} # type: ignore
+    config = {"kkt_od_inst": {"max_seq_length": 1420, "batch_size": 24}, "kkt_cd_inst": {"max_seq_length": 176, "batch_size": 128}} # type: ignore
     config = config[args.dataset_name]
     wandb.login(key=os.getenv("WANDB_TOKEN"), relogin=True)
     wandb.init(project=os.getenv("WANDB_PROJECT"), entity=os.getenv("WANDB_ID"), name=f"eval/{args.model_name}")
@@ -129,8 +137,6 @@ if __name__ in "__main__":
 
             preds.extend(output)
             labels.extend(label)
-            if idx == 0:
-                break
 
         end = time.time()
         out = compute_metrics([preds, labels])

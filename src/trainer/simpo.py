@@ -2,8 +2,7 @@ import os
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
-from peft import LoraConfig, get_peft_model
-from peft import prepare_model_for_kbit_training
+from peft import LoraConfig
 import huggingface_hub
 from src.metrics.ko_em import *
 from src.metrics.ko_rouge import *
@@ -28,13 +27,10 @@ def main():
                        "out": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_sft_synth_simpo_f16", #"/mnt/c/Users/thddm/Documents/model/f32_inst_tu_simpo_synthetic", 
                        "lr": 2e-6, "bs": 2, "dataname": "euiyulsong/kkt_synth_od_simpo"}
     
-    # if args.is_float16:
-    #     synthetic_simpo['name'] = "/mnt/c/Users/thddm/Documents/model/kor_wiki_quad_od_instruct_f16"
-    #     synthetic_simpo['out'] = "/mnt/c/Users/thddm/Documents/model/inst_tu_simpo_synthetic_f16"
 
-    simpo = {"name": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_f16",
-             "out": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tuning_sft_synth_sft_simpo_real_f16",
-             "lr": 2e-6, "bs": 3, "dataname": "euiyulsong/kkt_od_simpo"}
+    simpo = {"name": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_sft_synth_simpo_f16",
+             "out": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_sft_synth_simpo_real_simpo_f16",
+             "lr": 2e-7, "bs": 3, "dataname": "euiyulsong/kkt_od_simpo"}
 
 
     current = synthetic_simpo if args.is_synthetic else simpo
@@ -51,42 +47,11 @@ def main():
     )
     optim = "paged_adamw_32bit"
 
-    # for i in iter(raw_datasets):
-    #     raw_datasets[i] = raw_datasets[i].map(lambda example: {"prompt": example['prompt'], "chosen": example["chosen"] + "<eos>", "rejected": example["rejected"] + "<eos>"}, batched=False)
-
-    print(next(iter(raw_datasets)))
-    # With synthetic
-    # model_name = "/mnt/c/Users/thddm/Documents/model/kor_wiki_quad_od_instruct"
-    # output_dir = "/mnt/c/Users/thddm/Documents/model/kkt-simpo-synth"
-    # lr = 2e-6
-
-
     bnb_4bit_compute_dtype = "float32" if not args.is_float16 else "float16"
 
-    # bnb_4bit_quant_type = "nf4"
     compute_dtype = getattr(torch, bnb_4bit_compute_dtype)
     fp16 = False if not args.is_float16 else True
-    # use_4bit = True
-    # use_nested_quant = False
-
     bf16 = False
-    # bnb_config = BitsAndBytesConfig(
-    #     load_in_4bit=use_4bit,
-    #     bnb_4bit_quant_type=bnb_4bit_quant_type,
-    #     bnb_4bit_compute_dtype=compute_dtype,
-    #     bnb_4bit_use_double_quant=use_nested_quant,
-    # )
-
-    def print_trainable_parameters(model):
-        trainable_params = 0
-        total_params = 0
-
-        for _, param in model.named_parameters():
-            total_params += param.numel()
-            if param.requires_grad:
-                trainable_params += param.numel()
-
-        trainable_percent = 100 * trainable_params / total_params
 
 
     training_arguments = CPOConfig(
@@ -147,12 +112,7 @@ def main():
         task_type="CAUSAL_LM",
     )
     model.gradient_checkpointing_enable()
-    # model = prepare_model_for_kbit_training(model)
-    ft_model = get_peft_model(
-        model,
-        config,
-    )
-    print_trainable_parameters(ft_model)
+
 
     trainer = CPOTrainer(
         model=model,
