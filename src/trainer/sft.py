@@ -23,8 +23,8 @@ if __name__ == "__main__":
     wandb.login(key=os.getenv("WANDB_TOKEN"), relogin=True)
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--model_name", help="model_name", type=str, default="google/gemma-2b", required=False)
-    parser.add_argument("-d", "--dataset_name", help="Dataset name of huggingface repo", type=str, default="kkt_od_inst", required=False)
-    parser.add_argument("-o", "--output_name", help="Output name of the trained model", type=str, default="/mnt/c/Users/thddm/Documents/model/kkt_od_sft_float32")
+    parser.add_argument("-d", "--dataset_name", help="Dataset name of huggingface repo", type=str, default="kkt_corpus", required=False)
+    parser.add_argument("-o", "--output_name", help="Output name of the trained model", type=str, default="/mnt/c/Users/thddm/Documents/model/kkt_corpus_fp16")
     parser.add_argument("-t", "--debug_mode", help="Determines if debug mode", default=False, action="store_true")
     parser.add_argument("-s", "--do_train", help="Determines if train mode", default=False, action="store_true")
     parser.add_argument("-e", "--do_eval", help="Determines if eval mode", default=False, action="store_true")
@@ -36,15 +36,15 @@ if __name__ == "__main__":
     if args.do_eval:
         args.output_name = "/home/euiyul/tmp"
 
-    if args.is_float16:
-        if "f16" not in args.output_name or "float16" not in args.output_name:
-            args.output_name += "float16"
+    if not args.do_eval and args.is_float16:
+        if "f16" not in args.output_name or "fp16" not in args.output_name:
+            args.output_name += "_fp16"
 
     elif args.is_int4:
         None
-    else:
-        if "f32" not in args.output_name or "float32" not in args.output_name:
-            args.output_name += "float32"     
+    elif not args.do_eval and not args.is_float16:
+        if "f32" not in args.output_name or "fp32" not in args.output_name:
+            args.output_name += "_fp32"     
 
     model_hp = {"kkt_synth_od_sft": {"max_seq_length": 1411, "batch_size": 6, "lr": 2e-5}, 
                 "kkt_od_inst": {"max_seq_length": 1411, "batch_size": 6, "lr": 2e-4 if args.model_name == "google/gemma-2b" else 2e-6}, #divide by 2
@@ -76,9 +76,9 @@ if __name__ == "__main__":
     #     while example == data['text']:
     #         example = random.sample(few_shot, 1)
     #     return {"text": "\n\n".join(random.sample(few_shot, 1)) + "\n\n" + data["text"]}
-
-    for i in iter(dataset):
-        dataset[i] = dataset[i].map(lambda example: {"text": example["text"] + "<eos>"}, batched=False)
+    # if not args.is_float16:
+    #     for i in iter(dataset):
+    #         dataset[i] = dataset[i].map(lambda example: {"text": example["text"] + "<eos>"}, batched=False)
 
     print(next(iter(dataset)))
     # bnb_config = BitsAndBytesConfig(
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     print_trainable_parameters(ft_model)
     def compute_metrics(eval_preds):
         preds, labels = eval_preds
-        stopping_token = set([tokenizer.pad_token_id, tokenizer.eos_token_id, 107, tokenizer.decode(tokenizer.encode("<end_of_turn>")), -100])
+        stopping_token = set([tokenizer.eos_token_id, 107, tokenizer.decode(tokenizer.encode("<end_of_turn>")), -100])
         preds = preds.tolist()
         labels = labels.tolist()
 
@@ -224,7 +224,7 @@ if __name__ == "__main__":
         model=model,
         train_dataset=dataset['train'],
         eval_dataset=dataset['test'] if args.do_eval else None,
-        data_collator=DataCollatorForCompletionOnlyLM(response_template="<start_of_turn>model\n", tokenizer=tokenizer), #DataCollatorForCompletionOnlyLM(response_template="<start_of_turn>model\n", tokenizer=tokenizer) if "kkt_corpus" != args.dataset_name else None,
+        data_collator=DataCollatorForCompletionOnlyLM(response_template="<start_of_turn>model\n", tokenizer=tokenizer) if "corpus" not in args.dataset_name else None, #DataCollatorForCompletionOnlyLM(response_template="<start_of_turn>model\n", tokenizer=tokenizer) if "kkt_corpus" != args.dataset_name else None,
         peft_config=config,
         max_seq_length=model_hp[args.dataset_name]['max_seq_length'],
         dataset_text_field="text",

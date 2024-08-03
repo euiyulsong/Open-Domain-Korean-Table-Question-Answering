@@ -55,7 +55,7 @@ def compute_metric(retrieved, poses, method):
     wandb.log({f"{method}_rp": f"{round(r1 / len(poses) * 100, 3)}", f"{method}_r5": f"{round(r5 / len(poses) * 100, 3)}"})
 def orchestrator(file_name, dense_index, bm25_index, dense_model, lookup_table, corpus, args):
     f = open(file_name, "r")
-    # w = open(os.path.join(os.path.dirname(file_name), f"retrieved_{os.path.basename(file_name)}"), "w", encoding="utf-8")
+    w = open(os.path.join(os.path.dirname(file_name), f"retrieved_{os.path.basename(file_name)}"), "w", encoding="utf-8")
     queries = []
     answers = []
     poses = []
@@ -80,18 +80,20 @@ def orchestrator(file_name, dense_index, bm25_index, dense_model, lookup_table, 
     start2 = time.time()
 
     ce_reranked = []
-    for q, a, d, b in tqdm(zip(queries, answers, dense_retrieved, bm25_retrieved)):
+    for q, a, d, b, p in tqdm(zip(queries, answers, dense_retrieved, bm25_retrieved, poses)):
         ce = ce_reranker(q, list(set(d + b)), args)
         ce_reranked.append(ce)
+        neg = list(set(ce) - set(p))
+        pos = p
         t = "\n\n".join(ce)
-        # w.write(json.dumps({'question': q, 'table': t,'answer': a, 'chosen': i['chosen'], 'rejected': i['rejected']}, ensure_ascii=False) + "\n")
+        w.write(json.dumps({'question': q, 'table': t,'answer': a, 'neg': neg, 'pos': pos}, ensure_ascii=False) + "\n")
     end2 = time.time()
 
     print(f"CE")
     compute_metric(ce_reranked, poses, "ce")
     print()
     print(f"TPS: {(end - start + end2 - start2)/ len(queries)}")
-    # w.close()
+    w.close()
 
 
 if __name__ == "__main__":
@@ -101,7 +103,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--train_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/train.jsonl", required=False)
     parser.add_argument("-e", "--test_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/test.jsonl", required=False)
     parser.add_argument("-i", "--index_path", help="Path of the index", type=str, default="/mnt/c/Users/thddm/Documents/dataset/faiss.index", required=False)
-    parser.add_argument("-r", "--retrieval", help="Path of the retrieval", type=str, default="/mnt/c/Users/thddm/Documents/model/kkt-bge-m3-stochastic-dense", required=False)
+    parser.add_argument("-r", "--retrieval", help="Path of the retrieval", type=str, default="/mnt/c/Users/thddm/Documents/model/kkt-bge-m3-dense", required=False)
     parser.add_argument("-c", "--reranker", help="Path of the reranker", type=str, default="/home/euiyul/kkt-bge-reranker-v2", required=False)
     parser.add_argument("-o", "--output_name", help="Output huggingface repo name to save", type=str, default="kkt_sft", required=False)
     parser.add_argument("-v", "--view", help="View dataset", default=False, action="store_true")
@@ -134,8 +136,8 @@ if __name__ == "__main__":
     
     bm25 = BM25Okapi(tokenized_corpus)
 
-    print("Test")
-    orchestrator(args.test_dir, index, bm25, dense_model, lookup_table, corpus, args)
+    # print("Test")
+    # orchestrator(args.test_dir, index, bm25, dense_model, lookup_table, corpus, args)
     print("Train")
     orchestrator(args.train_dir, index, bm25, dense_model, lookup_table, corpus, args)
     

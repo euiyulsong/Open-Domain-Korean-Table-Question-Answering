@@ -25,17 +25,16 @@ def main():
     args = parser.parse_args()
 
     synthetic_simpo = {"name": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_f16",
-                       "out": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_sft_synth_simpo_f16", #"/mnt/c/Users/thddm/Documents/model/f32_inst_tu_simpo_synthetic", 
-                       "lr": 2e-6, "bs": 2, "dataname": "euiyulsong/kkt_synth_od_simpo"}
+                       "out": "/mnt/c/Users/thddm/Documents/model/f32_inst_tu_simpo_synthetic", #"/mnt/c/Users/thddm/Documents/model/f32_inst_tu_simpo_synthetic", 
+                       "lr": 2e-6, "bs": 3, "dataname": "euiyulsong/kkt_synth_od_simpo"}
     
-    # if args.is_float16:
-    #     synthetic_simpo['name'] = "/mnt/c/Users/thddm/Documents/model/kor_wiki_quad_od_instruct_f16"
-    #     synthetic_simpo['out'] = "/mnt/c/Users/thddm/Documents/model/inst_tu_simpo_synthetic_f16"
+    if args.is_float16:
+        synthetic_simpo['name'] = "/mnt/c/Users/thddm/Documents/model/kor_wiki_quad_od_instruct_f16"
+        synthetic_simpo['out'] = "/mnt/c/Users/thddm/Documents/model/inst_tu_simpo_synthetic_f16"
 
     simpo = {"name": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_f16",
-             "out": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tuning_sft_synth_sft_simpo_real_f16",
+             "out": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_sft_real_orpo_f16", # actually orpo
              "lr": 2e-6, "bs": 3, "dataname": "euiyulsong/kkt_od_simpo"}
-
 
     current = synthetic_simpo if args.is_synthetic else simpo
 
@@ -77,44 +76,16 @@ def main():
     #     bnb_4bit_use_double_quant=use_nested_quant,
     # )
 
-    def print_trainable_parameters(model):
-        trainable_params = 0
-        total_params = 0
-
-        for _, param in model.named_parameters():
-            total_params += param.numel()
-            if param.requires_grad:
-                trainable_params += param.numel()
-
-        trainable_percent = 100 * trainable_params / total_params
-
-
-    training_arguments = CPOConfig(
-        output_dir=output_dir,
-        num_train_epochs=1,
-        per_device_train_batch_size=bs,
-        per_device_eval_batch_size=bs, 
-        gradient_accumulation_steps=1,
-        optim=optim,
-        save_steps=500,
-        logging_steps=500,
-        learning_rate=lr,
-        weight_decay=0.001,
-        bf16=bf16,
-        do_train=True,
-        do_eval=False,
-        fp16=fp16,
-        warmup_ratio=0.1,
-        max_length=1420,
-        max_prompt_length=1401,
-        cpo_alpha=0,
-        loss_type="simpo",
-        lr_scheduler_type="constant_with_warmup",
-    )
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
+        # quantization_config=bnb_config, 
         torch_dtype=compute_dtype)
+    # if args.is_float16:
+    #     model.push_to_hub("euiyulsong/f16_insttuned", private=True)
 
+    # else:
+    #     model.push_to_hub("euiyulsong/f32_insttuned", private=True)
+    # raise()
     model.config.use_cache = False
     model.config.pretraining_tp = 1
 
@@ -152,20 +123,37 @@ def main():
         model,
         config,
     )
-    print_trainable_parameters(ft_model)
+    from trl import ORPOConfig, ORPOTrainer
 
-    trainer = CPOTrainer(
+    orpo_args = ORPOConfig(
+        learning_rate=1e-6, #for two stage pre-training 1e-6, #for orpo semi with synthetic 1e-6 , #1e-5 orpo 1e-4 for the semi orpo with synthetic
+        lr_scheduler_type="constant_with_warmup",
+        max_length=1411,
+        max_prompt_length=1411,
+        beta=0.1,
+        per_device_train_batch_size=bs, #20,
+        save_steps=500,
+        gradient_accumulation_steps=1,
+        optim=optim,
+        num_train_epochs=1,
+        logging_steps=500,
+        warmup_ratio=0.1,
+        output_dir=output_dir
+    )
+
+    trainer = ORPOTrainer(
         model=model,
-        args=training_arguments,
-        peft_config=config,
+        args=orpo_args,
         train_dataset=raw_datasets["train"],
+        peft_config=config,
         tokenizer=tokenizer,
     )
 
+
     trainer.train()
     merged_model = trainer.model.merge_and_unload()
-    merged_model.save_pretrained(training_arguments.output_dir, safe_serialization=True)
-    tokenizer.save_pretrained(training_arguments.output_dir)
+    merged_model.save_pretrained(orpo_args.output_dir, safe_serialization=True)
+    tokenizer.save_pretrained(orpo_args.output_dir)
 
 if __name__ == "__main__":
     main()

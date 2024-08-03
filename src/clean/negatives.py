@@ -6,6 +6,7 @@ from src.metrics.preprocess import normalize_answer
 import re
 import random
 import unicodedata
+from konlpy.tag import Mecab
 if __name__ in "__main__":
     """
     For Synthetic kkt dataset
@@ -49,11 +50,25 @@ if __name__ in "__main__":
     Remaining Errors: synthetic_qa_v2_wrong_refine_error_refine_error.jsonl
     """
     is_korquad = False
+    is_retrieved = False
     f = open("/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_concat_refine_step2.jsonl", "r", encoding="utf-8")
     w = open("/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2.jsonl", "w", encoding="utf-8")
     ww = open("/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2_wrong.jsonl", "w", encoding="utf-8")
     c = open("/mnt/c/Users/thddm/Documents/dataset/cleaned_corpus.jsonl", "r", encoding="utf-8")   
     pattern = r'(\{[^}]*\})'
+
+
+    """
+    For task-specific data
+    """
+    # is_korquad = False
+    # is_retrieved = True
+    # f = open("/mnt/c/Users/thddm/Documents/dataset/retrieved_train.jsonl", "r", encoding="utf-8")
+    # w = open("/mnt/c/Users/thddm/Documents/dataset/retrieved_train_rlaif.jsonl", "w", encoding="utf-8")
+    # ww = open("/mnt/c/Users/thddm/Documents/dataset/retrieved_train_rlaif.jsonl", "w", encoding="utf-8")
+    # c = open("/mnt/c/Users/thddm/Documents/dataset/cleaned_corpus.jsonl", "r", encoding="utf-8")   
+    # pattern = r'(\{[^}]*\})'
+
     mecab = Mecab()
     corpus = []
     for e in tqdm(c):
@@ -66,6 +81,7 @@ if __name__ in "__main__":
     count_wrong = 0
     for i in tqdm(f):
         i = json.loads(i)
+        i['query'] = i['question']
         for j in ['question', 'query']:
             i[j] = unicodedata.normalize("NFC", i[j])
         i['neg'] = [] if 'neg' not in i else i['neg']
@@ -77,7 +93,8 @@ if __name__ in "__main__":
             i['tables'] = i['pos'] + i['neg'][:4]
             if len(i['tables']) != 5:
                 raise()
-            random.shuffle(i['tables'])
+            if not is_retrieved:
+                random.shuffle(i['tables'])
             i['table'] = "\n\n".join(i['tables'])
 
 
@@ -91,7 +108,6 @@ if __name__ in "__main__":
         corpus_neg = i['neg']
         matches_pos  = None
         i['chosen'] = str(i['answer'].strip())
-        i['answer'] = i['chosen']
         i['question'] = i['query']
         if 'rejected' in i:
             del i['rejected']
@@ -125,12 +141,11 @@ if __name__ in "__main__":
                 temp = str(matches_pos[random.sample(key_set, 1)[0]])
                 found = False
                 counter = 0
-                while (i['chosen'] in temp or temp in i['chosen'] or i['chosen'] == temp) and counter < 5:
+                while (len(list(set(mecab.morphs(i['chosen'])) - set(mecab.morphs(temp))))  != len(list(set(mecab.morphs(i['chosen']))))  or i['chosen'] in temp or temp in i['chosen'] or i['chosen'] == temp) and counter < 5:
                     temp = str(matches_pos[random.sample(key_set, 1)[0]])
                     counter +=1
 
                 i['rejected'] = temp
-        i['chosen'] = i['answer'].strip()
 
         if len(i['neg']) < 8:
             out = bm25.get_top_n(mecab.morphs(normalize_answer(i['query'])), corpus, n=64)
@@ -152,7 +167,7 @@ if __name__ in "__main__":
         top8_neg = bm25_neg.get_top_n(mecab.morphs(normalize_answer(i['pos'][0])), corpus_neg, n=8)
         if len(top8_neg) < 8:
             raise()
-        if 'rejected' not in i or i['rejected'] == i['chosen'] or i['rejected'] in i['chosen'] or i['chosen'] in i['rejected']:
+        if 'rejected' not in i or i['rejected'] == i['chosen'] or i['rejected'] in i['chosen'] or i['chosen'] in i['rejected'] or len(list(set(mecab.morphs(i['chosen'])) - set(mecab.morphs(i['rejected']))))  != len(list(set(mecab.morphs(i['chosen'])))):
             sampled = random.sample(top8_neg, 1)[0]
             key_set = []
             json_sampled = json.loads(re.findall(pattern, sampled)[0])
@@ -161,14 +176,14 @@ if __name__ in "__main__":
             temp = str(json_sampled[random.sample(key_set, 1)[0]])
             i['pos'][0] = i['pos'][0]
             counter = 0
-            while (i['chosen'] in temp or temp in i['chosen'] or i['chosen'] == temp) and counter < 5:
+            while (len(list(set(mecab.morphs(i['chosen'])) - set(mecab.morphs(temp))))  != len(list(set(mecab.morphs(i['chosen'])))) or i['chosen'] in temp or temp in i['chosen'] or i['chosen'] == temp) and counter < 5:
                 temp = str(json_sampled[random.sample(key_set, 1)[0]])
                 counter += 1
 
 
             i['rejected'] = temp
 
-        if 'rejected' not in i or i['rejected'] == i['chosen'] or i['rejected'] in i['chosen'] or i['chosen'] in i['rejected']:
+        if 'rejected' not in i or i['rejected'] == i['chosen'] or i['rejected'] in i['chosen'] or i['chosen'] in i['rejected'] or len(list(set(mecab.morphs(i['chosen'])) - set(mecab.morphs(i['rejected']))))  != len(list(set(mecab.morphs(i['chosen'])))):
             sampled = random.sample(corpus, 1)[0]
             key_set = []
             json_sampled = json.loads(re.findall(pattern, sampled)[0])
@@ -176,12 +191,14 @@ if __name__ in "__main__":
                 key_set.append(k)   
             temp = str(json_sampled[random.sample(key_set, 1)[0]])
             i['pos'][0] = i['pos'][0]
-            
-            while i['chosen'] in temp or temp in i['chosen'] or i['chosen'] == temp:
+            counter = 0
+            while (len(list(set(mecab.morphs(i['chosen'])) - set(mecab.morphs(temp))))  != len(list(set(mecab.morphs(i['chosen']))))  or i['chosen'] in temp or temp in i['chosen'] or i['chosen'] == temp) and counter < 100:
                 temp = str(json_sampled[random.sample(key_set, 1)[0]])
+                counter += 1
             i['rejected'] = temp
 
-        assert 'rejected' in i and i['rejected'] not in i['chosen'] and i['chosen'] not in i['rejected'] and i['rejected'] != i['chosen'], f"{i['rejected']}\n{i['chosen']}"
+        if not (len(list(set(mecab.morphs(i['chosen'])) - set(mecab.morphs(i['rejected'])))) == len(list(set(mecab.morphs(i['chosen']))))  and 'rejected' in i and i['rejected'] not in i['chosen'] and i['chosen'] not in i['rejected'] and i['rejected'] != i['chosen']):
+            continue
         i['neg'] = top8_neg
         assert len(i['pos']) == 1 and len(i['neg']) == 8, f"{len(i['pos'])}\t{len(i['neg'])}"
         if i['pos'][0] in i['neg']:
