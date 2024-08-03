@@ -37,7 +37,7 @@ def compute_metrics(eval_preds, tokenizer):
     prompt = tokenizer.batch_decode(prompts, skip_special_tokens=True)
     prediction_reconstruct = []
     for p, q in zip(prediction, prompt):
-        prediction_reconstruct.append(p[len[q]:].strip())
+        prediction_reconstruct.append(p[len(q):].strip())
     prediction= prediction_reconstruct
     print(actual[:2])
     print(prediction[:2])
@@ -129,9 +129,6 @@ if __name__ in "__main__":
             
             preds.extend(output)
             break
-        print(args.model_name)
-        print(preds)
-        print(labels)
-        print(prompts)
+
         print(compute_metrics([preds, labels, prompts], tokenizer))
         wandb.log(compute_metrics([preds, labels, prompts], tokenizer))
