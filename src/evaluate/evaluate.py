@@ -8,20 +8,16 @@ from src.metrics.ko_rouge import *
 from src.metrics.ko_f1 import *
 import wandb
 from dataclasses import dataclass
-from typing import Union
-from transformers.file_utils import PaddingStrategy
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 import time
 
 @dataclass
 class CustomDataCollator:
     tokenizer: PreTrainedTokenizerBase
-
-    def __call__(self, features):
+    return_tensors: str ="pt"
+    def __call__(self, features, ):
         label_length = [len(feature["label"]) for feature in features]
         input_ids_length = [len(feature['input_ids']) for feature in features]
-
-
         max_label_length = max(label_length)
         max_input_length = max(input_ids_length)
         tobe = {}
@@ -32,7 +28,7 @@ class CustomDataCollator:
             for key in ['input_ids', 'attention_mask']:
                 tobe[key].append([self.tokenizer.pad_token_id] * (max_input_length - len(feature[key])) + feature[key])
             tobe['labels'].append([self.tokenizer.pad_token_id] * (max_label_length - len(feature['label'])) + feature['label'])
-        features = BatchEncoding(tobe, tensor_type=self.return_tensors)
+        features = BatchEncoding(tobe, self.tensor_type)
         return features
 
 
@@ -85,11 +81,9 @@ if __name__ in "__main__":
 
     if '<pad>' in tokenizer.get_vocab():
         print('<pad> token is in the tokenizer. Using <pad> for pad')
-        # Set the pad token
         tokenizer.pad_token = '<pad>'
     elif '<unk>' in tokenizer.get_vocab():
         print('<unk> token is in the tokenizer. Using unk for pad')
-        # Set the pad token
         tokenizer.pad_token = '<unk>'
     else:
         print(f'Using EOS token, {tokenizer.eos_token}, for padding')
@@ -109,6 +103,7 @@ if __name__ in "__main__":
         if idx == 0:
             print(tokenized)
         datasets.append(tokenized)
+
     sizes = len(datasets)
     end = 107
     datasets = CustomDataset(datasets)
