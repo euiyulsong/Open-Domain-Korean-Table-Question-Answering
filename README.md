@@ -27,10 +27,11 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 | ------------- | ------------- | ------------- |------------- | ------------- |
 | SFT (Close-book) | 0 |  |  | 51.81 |
 | TAPT + SFT (Close-book) | 0 |   |  | 514.2573 + 51.81 |
-| SFT (Open-book) | 0 | 3.852  |  |  |
-| Instruction Tuning | 0 |   |  | 8,017.02 |
-| Instruction Tuning + Synthetic SFT | 0  |   |  | 3034.3011 |
-| Instruction Tuning + Synthetic SFT + SimPO  |  0 |   |  | 2069.1573 |
+| SFT (Open-book) | 0 |   |  |  |
+| Instruction Tuning | 0 | 3.267  | 60.462 | 8,017.02 |
+| Instruction Tuning + Synthetic SFT | 0  | 3.353  | 61.273 | 3034.3011 |
+| Instruction Tuning + Synthetic SFT + SFT  |  0 |   |  |  |
+| Instruction Tuning + Synthetic SFT + SFT + SIMPO |  0 |   |  | 2069.1573 |
 
 
 
