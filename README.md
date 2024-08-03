@@ -22,7 +22,7 @@ RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b]
 
 ### Reader
 
-~~#### google/gemma-2b (float16) ~~
+#### google/gemma-2b (float16)
 | Method | EM | F-1 | Rouge-L | Training Time | 
 | ------------- | ------------- | ------------- |------------- | ------------- |
 | SFT (Close-book) | 0 |  |  | 51.81 |
