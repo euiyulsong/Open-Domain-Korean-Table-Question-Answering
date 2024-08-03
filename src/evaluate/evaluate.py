@@ -66,7 +66,7 @@ if __name__ in "__main__":
     parser.add_argument("-m", "--model_name", help="Output name of the trained model", type=str, default="kkt_instruction_tune_synth_sft_synth_simpo_f16")
     args = parser.parse_args()
     args.model_name = "/mnt/c/Users/thddm/Documents/model/" + args.model_name
-    config = {"kkt_od_inst": {"max_seq_length": 1420, "batch_size": 24}, "kkt_cd_inst": {"max_seq_length": 176, "batch_size": 128}} # type: ignore
+    config = {"kkt_od_inst": {"max_seq_length": 1420, "batch_size": 12}, "kkt_cd_inst": {"max_seq_length": 176, "batch_size": 64}} # type: ignore
     config = config[args.dataset_name]
     wandb.login(key=os.getenv("WANDB_TOKEN"), relogin=True)
     wandb.init(project=os.getenv("WANDB_PROJECT"), entity=os.getenv("WANDB_ID"), name=f"eval/{args.model_name}")
