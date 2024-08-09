@@ -23,14 +23,14 @@ def main():
 
     args = parser.parse_args()
 
-    synthetic_simpo = {"name": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_f16",
-                       "out": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_sft_synth_simpo_f16", #"/mnt/c/Users/thddm/Documents/model/f32_inst_tu_simpo_synthetic", 
-                       "lr": 2e-6, "bs": 2, "dataname": "euiyulsong/kkt_synth_od_simpo"}
+    synthetic_simpo = {"name": "/mnt/c/Users/thddm/Documents/model/" + "kkt_instruction_tune_synth_500_sft_real_sft_f16",
+                       "out": "/mnt/c/Users/thddm/Documents/model/" + "kkt_instruction_tune_synth_500_sft_real_sft_synth_simpo_f16", #"/mnt/c/Users/thddm/Documents/model/f32_inst_tu_simpo_synthetic", 
+                       "lr": 2e-7, "bs": 2, "dataname": "euiyulsong/kkt_synth_od_500_simpo"}
     
 
-    simpo = {"name": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_sft_synth_simpo_f16",
-             "out": "/mnt/c/Users/thddm/Documents/model/kkt_instruction_tune_synth_sft_synth_simpo_real_simpo_f16",
-             "lr": 2e-7, "bs": 2, "dataname": "euiyulsong/kkt_od_simpo"}
+    simpo = {"name": "/mnt/c/Users/thddm/Documents/model/" + "kkt_instruction_tune_synth_500_sft_f16",
+             "out": "/mnt/c/Users/thddm/Documents/model/" + "kkt_instruction_tune_synth_500_sft_real_synth_f16",
+             "lr": 2e-7, "bs": 3, "dataname": "euiyulsong/kkt_od_simpo"}
 
 
     current = synthetic_simpo if args.is_synthetic else simpo

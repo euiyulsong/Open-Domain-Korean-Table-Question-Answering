@@ -11,7 +11,7 @@ import os
 import numpy as np
 from src.metrics.preprocess import normalize_answer
 import time
-import wandb
+# import wandb
 import datetime
 
 
@@ -21,11 +21,13 @@ def bm25_retrieval(queries, bm25_index, corpus):
 def dense_retrieval(queries, dense_index, dense_model, lookup_table):
     embeddings = dense_model.encode(queries, batch_size=12, max_length=8192)['dense_vecs']
     indices = []
+    distances = []
     for i in embeddings:
-        _, indice = dense_index.search(np.array([i]), 12)
+        distance, indice = dense_index.search(np.array([i]), 12)
         indices.append(indice[0])
+        distances.append(distance[0][0])
 
-    return [[lookup_table[j] for j in i] for i in indices]
+    return [[lookup_table[j] for j in i] for i in indices], distances
 
 def ce_reranker(q, contexts, args):
     reranker = FlagReranker(args.reranker)
@@ -52,10 +54,10 @@ def compute_metric(retrieved, poses, method):
         r5 += i_r5
     print(f"R1: {round(r1 / len(poses) * 100, 3)}")
     print(f"R5: {round(r5 / len(poses) * 100, 3)}")
-    wandb.log({f"{method}_rp": f"{round(r1 / len(poses) * 100, 3)}", f"{method}_r5": f"{round(r5 / len(poses) * 100, 3)}"})
+    # wandb.log({f"{method}_rp": f"{round(r1 / len(poses) * 100, 3)}", f"{method}_r5": f"{round(r5 / len(poses) * 100, 3)}"})
 def orchestrator(file_name, dense_index, bm25_index, dense_model, lookup_table, corpus, args):
     f = open(file_name, "r")
-    w = open(os.path.join(os.path.dirname(file_name), f"retrieved_{os.path.basename(file_name)}"), "w", encoding="utf-8")
+    # w = open(os.path.join(os.path.dirname(file_name), f"retrieved_{os.path.basename(file_name)}"), "w", encoding="utf-8")
     queries = []
     answers = []
     poses = []
@@ -65,43 +67,44 @@ def orchestrator(file_name, dense_index, bm25_index, dense_model, lookup_table, 
         poses.append(i['pos'])
         queries.append(q)
         answers.append(a)
-    bm25_retrieved = bm25_retrieval(queries, bm25_index, corpus)
-    print(f"Lexical")
-    compute_metric(bm25_retrieved, poses, "bm")
-    print()
+    # bm25_retrieved = bm25_retrieval(queries, bm25_index, corpus)
+    # print(f"Lexical")
+    # compute_metric(bm25_retrieved, poses, "bm")
+    # print()
     start = time.time()
-    dense_retrieved = dense_retrieval(queries, dense_index, dense_model, lookup_table)
+    dense_retrieved, distances = dense_retrieval(queries, dense_index, dense_model, lookup_table)
     end = time.time()
-
+    
     print(f"Dense")
+    print(f"Distance: {sum(distances)/len(distances)}")
     compute_metric(dense_retrieved, poses, "dense")
     print()
              
-    start2 = time.time()
+    # start2 = time.time()
 
-    ce_reranked = []
-    for q, a, d, b, p in tqdm(zip(queries, answers, dense_retrieved, bm25_retrieved, poses)):
-        ce = ce_reranker(q, list(set(d + b)), args)
-        ce_reranked.append(ce)
-        neg = list(set(ce) - set(p))
-        pos = p
-        t = "\n\n".join(ce)
-        w.write(json.dumps({'question': q, 'table': t,'answer': a, 'neg': neg, 'pos': pos}, ensure_ascii=False) + "\n")
-    end2 = time.time()
+    # ce_reranked = []
+    # for q, a, d, b, p in tqdm(zip(queries, answers, dense_retrieved, bm25_retrieved, poses)):
+    #     ce = ce_reranker(q, list(set(d + b)), args)
+    #     ce_reranked.append(ce)
+    #     neg = list(set(ce) - set(p))
+    #     pos = p
+    #     t = "\n\n".join(ce)
+    #     w.write(json.dumps({'question': q, 'table': t,'answer': a, 'neg': neg, 'pos': pos}, ensure_ascii=False) + "\n")
+    # end2 = time.time()
 
-    print(f"CE")
-    compute_metric(ce_reranked, poses, "ce")
-    print()
-    print(f"TPS: {(end - start + end2 - start2)/ len(queries)}")
-    w.close()
+    # print(f"CE")
+    # compute_metric(ce_reranked, poses, "ce")
+    # print()
+    # print(f"TPS: {(end - start + end2 - start2)/ len(queries)}")
+    # w.close()
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--input_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/cleaned_corpus.jsonl", required=False)
-    parser.add_argument("-t", "--train_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/train.jsonl", required=False)
-    parser.add_argument("-e", "--test_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/test.jsonl", required=False)
+    parser.add_argument("-t", "--train_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/train_right.jsonl", required=False)
+    parser.add_argument("-e", "--test_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/test_right.jsonl", required=False)
     parser.add_argument("-i", "--index_path", help="Path of the index", type=str, default="/mnt/c/Users/thddm/Documents/dataset/faiss.index", required=False)
     parser.add_argument("-r", "--retrieval", help="Path of the retrieval", type=str, default="/mnt/c/Users/thddm/Documents/model/kkt-bge-m3-dense", required=False)
     parser.add_argument("-c", "--reranker", help="Path of the reranker", type=str, default="/home/euiyul/kkt-bge-reranker-v2", required=False)
@@ -109,8 +112,8 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--view", help="View dataset", default=False, action="store_true")
     parser.add_argument("-s", "--split", help="Dataset split", type=str, default="train", required=False)
     args = parser.parse_args()
-    wandb.login(key=os.getenv("WANDB_TOKEN"), relogin=True)
-    wandb.init(project=os.getenv("WANDB_PROJECT"), entity=os.getenv("WANDB_ID"), name=f"retrieval_performance_{str(datetime.datetime.now()).replace(" ", "")}")
+    # wandb.login(key=os.getenv("WANDB_TOKEN"), relogin=True)
+    # wandb.init(project=os.getenv("WANDB_PROJECT"), entity=os.getenv("WANDB_ID"), name=f"retrieval_performance_{str(datetime.datetime.now()).replace(" ", "")}")
 
     corpus = set()
     f = open(args.input_dir, "r")
@@ -136,9 +139,9 @@ if __name__ == "__main__":
     
     bm25 = BM25Okapi(tokenized_corpus)
 
-    # print("Test")
-    # orchestrator(args.test_dir, index, bm25, dense_model, lookup_table, corpus, args)
-    print("Train")
-    orchestrator(args.train_dir, index, bm25, dense_model, lookup_table, corpus, args)
+    print("Test")
+    orchestrator(args.test_dir, index, bm25, dense_model, lookup_table, corpus, args)
+    # print("Train")
+    # orchestrator(args.train_dir, index, bm25, dense_model, lookup_table, corpus, args)
     
 

@@ -24,7 +24,10 @@ if __name__ in "__main__":
     ww = open("/mnt/c/Users/thddm/Documents/dataset/train_wrong.jsonl", "w", encoding="utf-8")
     c = open("/mnt/c/Users/thddm/Documents/dataset/cleaned_corpus.jsonl", "r", encoding="utf-8")   
     """
-
+    # f = open("/mnt/c/Users/thddm/Documents/dataset/train.jsonl", "r", encoding="utf-8")
+    # w = open("/mnt/c/Users/thddm/Documents/dataset/train_rlaif.jsonl", "w", encoding="utf-8")
+    # ww = open("/mnt/c/Users/thddm/Documents/dataset/train_wrong.jsonl", "w", encoding="utf-8")
+    # c = open("/mnt/c/Users/thddm/Documents/dataset/cleaned_corpus.jsonl", "r", encoding="utf-8")  
     """
     For SFT Korquad v2.0 dataet
     """
@@ -51,6 +54,7 @@ if __name__ in "__main__":
     """
     is_korquad = False
     is_retrieved = False
+    is_synthetic = True
     f = open("/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_concat_refine_step2.jsonl", "r", encoding="utf-8")
     w = open("/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2.jsonl", "w", encoding="utf-8")
     ww = open("/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2_wrong.jsonl", "w", encoding="utf-8")
@@ -117,8 +121,12 @@ if __name__ in "__main__":
         matches_pos = json.loads(re.findall(pattern, i['pos'][0])[0])
         for k, v in matches_pos.items():
             v = str(v)
-            if keys is None and (v == i['answer'] or i['answer'] in v or v in i['answer']):
-                keys = k
+            if is_synthetic:
+                if keys is None and (v == i['answer']):
+                    keys = k
+            else:
+                if keys is None and (v == i['answer'] or i['answer'] in v or v in i['answer']):
+                    keys = k                
             key_set.append(k)
         if keys is None:
             ww.write(json.dumps(i, ensure_ascii=False) + "\n")
@@ -155,6 +163,8 @@ if __name__ in "__main__":
                 if len(i['neg']) >= 8:
                     break
         i['tables'] = i['pos'] + i['neg'][:4]
+        if not is_retrieved:
+            random.shuffle(i['tables'])
         if len(i['tables']) != 5:
             raise()
         random.shuffle(i['tables'])

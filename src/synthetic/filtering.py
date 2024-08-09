@@ -9,9 +9,12 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--corpus_dir", help="Corpus path", type=str, default="/mnt/c/Users/thddm/Documents/dataset/cleaned_corpus.jsonl", required=False)
     parser.add_argument("-t", "--train_dir", help="Train path", type=str, default="/mnt/c/Users/thddm/Documents/dataset/train.jsonl", required=False)
 
-    parser.add_argument("-s", "--synthetic", help="Synthetic path", type=str, default="/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_concat_firstwrong_firstright.jsonl", required=False)
-    parser.add_argument("-o", "--output_dir", help="Output filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_filtered_rlaif.jsonl", required=False)
+    parser.add_argument("-s", "--synthetic", help="Synthetic path", type=str, default="/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2.jsonl", required=False)
+    parser.add_argument("-o", "--output_dir", help="Output filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/synthetic_v2_rlaif_nns_500.jsonl", required=False)
+    parser.add_argument("-n", "--neighbors", help="Number of nearest neighbor", type=int, default=1000, required=False)
+
     args = parser.parse_args()
+    args.output_dir = args.output_dir.replace("500", f"{args.neighbors}")
     dense_corpus = []
     existing_data = set()
     question_data = []
@@ -66,5 +69,7 @@ if __name__ == "__main__":
             filtered.append(m)
     
     filtered.sort(key= lambda x: x['l2_distance'])
-    for m in filtered:
+    for idx, m in enumerate(filtered):
+        if idx == args.neighbors:
+            break
         w.write(json.dumps(m, ensure_ascii=False) + "\n")

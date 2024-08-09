@@ -23,8 +23,8 @@ if __name__ == "__main__":
     """
     KKT Corpus
     """
-    parser.add_argument("-d", "--input_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/synthetic_qa_v2_rlaif_refine_step2.jsonl", required=False)
-    parser.add_argument("-o", "--output_name", help="Output huggingface repo name to save", type=str, default="kkt_synth_od_simpo", required=False)
+    parser.add_argument("-d", "--input_dir", help="Input filename to load", type=str, default="/mnt/c/Users/thddm/Documents/dataset/synthetic_v2_rlaif_nns_1000.jsonl", required=False)
+    parser.add_argument("-o", "--output_name", help="Output huggingface repo name to save", type=str, default="kkt_synth_od_1000", required=False)
     parser.add_argument("-v", "--view", help="View dataset", default=False, action="store_true")
     parser.add_argument("-s", "--split", help="Dataset split", type=str, default="train", required=False)
     parser.add_argument("-m", "--model_name", help="Model name for tokenization", type=str, default="google/gemma-2b", required=False)
@@ -83,6 +83,7 @@ if __name__ == "__main__":
                     rejected = f"{i['rejected']}<end_of_turn>"
                     chosen = f"{i['answer']}<end_of_turn>"
                     prompt = f"<start_of_turn>user\n{random.sample(od_instructions, 1)[0]}\n\n[질문]: {i['question']}\n\n[문맥]: {i['table']}\n\n[답변]: <end_of_turn>\n<start_of_turn>model\n"
+                    text = f"{prompt}{chosen}"
                 elif 'corpus' not in args.output_name:
                     text = f"<start_of_turn>user\n{random.sample(cd_instructions, 1)[0]}\n\n[질문]: {i['question']}\n\n[답변]: <end_of_turn>\n<start_of_turn>model\n{i['answer']}<end_of_turn>"
             if "simpo" not in args.output_name:
@@ -121,7 +122,7 @@ if __name__ == "__main__":
                 bigger_than_1410+=1
             max_length = max(current_length, max_length)
             lengths.append(current_length)
-            if idx == 0:
+            if idx < 5:
                 pprint({j: i[j] for j in ["prompt", "chosen", "rejected", "text"] if j in i})
         lengths.sort()
         print(f"Count longer than 1411: {bigger_than_1410}")

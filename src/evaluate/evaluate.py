@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, BatchEncoding, AutoModelForCausalLM
+from transformers import AutoTokenizer, BatchEncoding, AutoModelForCausalLM, BitsAndBytesConfig
 import argparse
 import torch
 from datasets import load_dataset
@@ -64,22 +64,31 @@ if __name__ in "__main__":
 
     parser.add_argument("-d", "--dataset_name", help="Dataset name of huggingface repo", type=str, default="kkt_od_inst", required=False)
     parser.add_argument("-m", "--model_name", help="Output name of the trained model", type=str, default="kkt_instruction_tune_synth_sft_synth_simpo_f16")
+    parser.add_argument("-f", "--is_float16", help="Determines if float16 mode", default=False, action="store_true")
+    parser.add_argument("-i", "--is_int4", help="Determines if int4 mode", default=False, action="store_true")
+
     args = parser.parse_args()
+    wandb.init(project=os.getenv("WANDB_PROJECT"), entity=os.getenv("WANDB_ID"), name=f"PADDING_LEFT/eval/{args.model_name}")
+
     args.model_name = "/mnt/c/Users/thddm/Documents/model/" + args.model_name
-    config = {"kkt_od_inst": {"max_seq_length": 1420, "batch_size": 12}, "kkt_cd_inst": {"max_seq_length": 176, "batch_size": 64}}
+    config = {"kkt_od_inst": {"max_seq_length": 1420, "batch_size": 12}, "kkt_cd_inst": {"max_seq_length": 176, "batch_size": 128}}
     config = config[args.dataset_name]
     wandb.login(key=os.getenv("WANDB_TOKEN"), relogin=True)
-    wandb.init(project=os.getenv("WANDB_PROJECT"), entity=os.getenv("WANDB_ID"), name=f"eval/{args.model_name}")
     model_name = args.model_name
-    compute_dtype = "float16"
+    compute_dtype = "float16" if args.is_float16 else "float32"
     dataset = load_dataset(
         f"euiyulsong/{args.dataset_name}",
     )
     tokenizer = AutoTokenizer.from_pretrained(model_name, add_eos_token=True)
-    model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            device_map='auto',
-            torch_dtype=compute_dtype)
+    if args.is_int4:
+        quantization_config = BitsAndBytesConfig(load_in_4bit=True)
+        model = AutoModelForCausalLM.from_pretrained(model_name, device_map='auto', quantization_config=quantization_config, torch_dtype=compute_dtype)
+
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                device_map='auto',
+                torch_dtype=compute_dtype)
     
     model.config.use_cache = False
     model.config.pretraining_tp = 1
@@ -112,7 +121,8 @@ if __name__ in "__main__":
     sizes = len(datasets)
     end = 107
     datasets = CustomDataset(datasets)
-    model.to("cuda")
+    if not args.is_int4:
+        model.to("cuda")
     preds = []
     labels = []
 
