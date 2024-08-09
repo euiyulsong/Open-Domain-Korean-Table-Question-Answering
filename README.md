@@ -35,11 +35,12 @@ python src/synthetic/filter.py #consistent-based filtering (sort by l2 distance 
 ### Inferenece
 ```python src/retrieval/retrieval.py```
 
-## Instruction Tuning 
+## Reader
+### Instruction Tuning 
 ```python src/trainer/sft.py --dataset_name ${INSTRUCTION_DATASET} --model_name ${BASE_MODEL}```
 
-## Simple Preference Optimization
+### Simple Preference Optimization
 ```python src/trainer/simpo.py```
 
-## Odds Ratio Preference Optimization
+### Odds Ratio Preference Optimization
 ```python src/trainer/orpo.py```
