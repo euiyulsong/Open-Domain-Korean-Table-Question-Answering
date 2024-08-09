@@ -2,7 +2,10 @@
 RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b](https://huggingface.co/google/gemma-2b) for Open Domain Table Question Answering.
 
 ## Install Required Packages
-```pip install -r requirements.txt```
+```
+pip install -r requirements.txt
+python setup.py install
+```
 
 ## Data Preprocessing
 ### Clean Data
