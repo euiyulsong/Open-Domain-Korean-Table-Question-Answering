@@ -1,6 +1,9 @@
 # Open Domain Question Answering
 RAFT, TAPT, Instruction Tuning, and Preference Optimization on [google/gemma-2b](https://huggingface.co/google/gemma-2b) for Open Domain Table Question Answering.
 
+## Paper
+[Retrieval_Augmented_Preference_Optimization_for_Table_Question_Answering.pdf](https://github.com/user-attachments/files/17163433/Retrieval_Augmented_Preference_Optimization_for_Table_Question_Answering.pdf)
+
 ## Install Required Packages
 ```
 pip install -r requirements.txt
